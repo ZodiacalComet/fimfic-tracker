@@ -328,16 +328,22 @@ mod test {
 
     // TODO: Add test for async_from_file
 
+    macro_rules! config_path {
+        ($filename:literal) => {
+            concat!(env!("CARGO_MANIFEST_DIR"), "/config/", $filename)
+        }
+    }
+
     #[test]
     fn test_config_sources() -> errors::Result<()> {
         assert_config_source!(
-            [from_file: "config/default.toml"]
+            [from_file: config_path!("default.toml")]
             download_dir = "~/Downloads";
             tracker_file = "~/.local/share/fimfic-tracker/track-data.json";
         );
 
         assert_config_source!(
-            [from_file: "config/test-config.toml"]
+            [from_file: config_path!("test-config.toml")]
             download_dir = "~/some/path/to/dir";
             tracker_file = "~/path/of/file.json";
             download_format = DownloadFormat::EPUB;
