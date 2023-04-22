@@ -14,8 +14,8 @@ path = "src/main.rs"
 doc = false
 
 [build-dependencies]
-clap = { version = "3", features = ["derive"] }
-clap_complete = "3"
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4"
 
 [dependencies.fimfic-tracker]
 path = "../core"
@@ -23,7 +23,7 @@ version = "0.1"
 features = ["downloader"]
 
 [dependencies]
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive", "wrap_help"] }
 console = "0.14"
 dialoguer = "0.8"
 chrono = "0.4"

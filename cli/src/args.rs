@@ -1,4 +1,9 @@
-use clap::{arg, App, ArgMatches, Error, FromArgMatches, Parser, Subcommand, ValueHint};
+use clap::{
+    arg,
+    builder::{Command, NonEmptyStringValueParser},
+    error::{Error, RichFormatter},
+    ArgAction, ArgMatches, FromArgMatches, Parser, Subcommand, ValueHint,
+};
 
 #[derive(Parser, Debug, PartialEq)]
 #[clap(name = "fimfic-tracker", version, author)]
@@ -11,12 +16,12 @@ pub struct Args {
         value_name = "FILE",
         value_hint(ValueHint::FilePath),
         display_order = 1,
-        forbid_empty_values(true)
+        value_parser(NonEmptyStringValueParser::new())
     )]
     pub config: Option<String>,
     /// Shows verbose output, can be used multiple times to set level of verbosity.
-    #[clap(short, long, display_order = 2, parse(from_occurrences))]
-    pub verbose: u64,
+    #[clap(short, long, display_order = 2, action(ArgAction::Count))]
+    pub verbose: u8,
     #[clap(subcommand)]
     pub subcommand: SubCommand,
 }
@@ -48,7 +53,7 @@ pub struct Track {
         value_name = "ID_OR_URL",
         required = true,
         value_hint(ValueHint::Url),
-        forbid_empty_values(true)
+        value_parser(NonEmptyStringValueParser::new())
     )]
     pub stories: Vec<String>,
 }
@@ -62,7 +67,7 @@ pub struct Untrack {
         value_name = "ID",
         required = true,
         value_hint(ValueHint::Other),
-        forbid_empty_values(true)
+        value_parser(NonEmptyStringValueParser::new())
     )]
     pub ids: Vec<String>,
 }
@@ -84,8 +89,8 @@ pub enum Prompt {
 }
 
 impl clap::Args for Prompt {
-    fn augment_args(app: App<'_>) -> App<'_> {
-        app.arg(
+    fn augment_args(cmd: Command) -> Command {
+        cmd.arg(
             arg!(-y --yes "Automatically answers prompts with Y")
                 .display_order(50)
                 .conflicts_with("no"),
@@ -93,26 +98,29 @@ impl clap::Args for Prompt {
         .arg(arg!(-n --no "Automatically answers prompts with N").display_order(51))
     }
 
-    fn augment_args_for_update(app: App<'_>) -> App<'_> {
-        Prompt::augment_args(app)
+    fn augment_args_for_update(cmd: Command) -> Command {
+        Prompt::augment_args(cmd)
     }
 }
 
 impl FromArgMatches for Prompt {
-    fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
-        Ok(if matches.is_present("yes") {
+    fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error<RichFormatter>> {
+        Ok(if matches.get_flag("yes") {
             Prompt::AssumeYes
-        } else if matches.is_present("no") {
+        } else if matches.get_flag("no") {
             Prompt::AssumeNo
         } else {
             Prompt::Ask
         })
     }
 
-    fn update_from_arg_matches(&mut self, matches: &ArgMatches) -> Result<(), Error> {
-        *self = if matches.is_present("yes") {
+    fn update_from_arg_matches(
+        &mut self,
+        matches: &ArgMatches,
+    ) -> Result<(), Error<RichFormatter>> {
+        *self = if matches.get_flag("yes") {
             Prompt::AssumeYes
-        } else if matches.is_present("no") {
+        } else if matches.get_flag("no") {
             Prompt::AssumeNo
         } else {
             Prompt::Ask
@@ -135,7 +143,7 @@ pub struct Download {
     #[clap(
         value_name = "ID",
         value_hint(ValueHint::Other),
-        forbid_empty_values(true)
+        value_parser(NonEmptyStringValueParser::new())
     )]
     pub ids: Vec<String>,
 }

@@ -21,7 +21,7 @@ fn indent_args(args: &Arguments<'_>) -> String {
         .join("\n")
 }
 
-pub fn configure(verbose: u64) {
+pub fn configure(verbose: u8) {
     let mut builder = env_logger::builder();
 
     if verbose == 0 {

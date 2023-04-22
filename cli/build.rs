@@ -1,6 +1,6 @@
 use std::env;
 
-use clap::IntoApp;
+use clap::CommandFactory;
 use clap_complete::{generate_to, Shell};
 
 include!("src/args.rs");
@@ -22,7 +22,7 @@ fn main() {
         Some(outdir) => outdir,
     };
 
-    let mut app = Args::into_app();
+    let mut app = Args::command();
     let name = app.get_name().to_string();
     generate!([Bash, Elvish, Fish, PowerShell, Zsh], app, name, out_dir);
 }
