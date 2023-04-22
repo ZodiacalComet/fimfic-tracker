@@ -249,7 +249,7 @@ mod test {
     use chrono::Utc;
 
     #[test]
-    fn test_download_url_builder() {
+    fn download_url_builder() {
         use crate::{config::DownloadFormat, StoryStatus};
 
         let story = Story {

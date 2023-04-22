@@ -300,7 +300,7 @@ mod test {
 
     #[test]
     #[ignore]
-    fn print_default_config() {
+    fn print_default() {
         println!("{:#?}", Config::default());
     }
 
@@ -335,7 +335,7 @@ mod test {
     }
 
     #[test]
-    fn test_config_sources() -> errors::Result<()> {
+    fn deserializing_sources() -> errors::Result<()> {
         assert_config_source!(
             [from_file: config_path!("default.toml")]
             download_dir = "~/Downloads";
@@ -378,7 +378,7 @@ mod test {
     }
 
     #[test]
-    fn test_config_merge() {
+    fn merging_result() {
         let config = ConfigBuilder::new()
             .download_dir("~/Download")
             .download_format(DownloadFormat::EPUB)

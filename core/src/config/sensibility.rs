@@ -97,7 +97,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_comparison() {
+    fn comparison() {
         assert!(SensibilityLevel::OnlyChapters == SensibilityLevel::OnlyChapters);
         assert!(SensibilityLevel::OnlyChapters < SensibilityLevel::IncludeWords);
         assert!(SensibilityLevel::OnlyChapters < SensibilityLevel::Anything);

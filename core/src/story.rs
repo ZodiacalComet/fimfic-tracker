@@ -188,7 +188,7 @@ mod test {
     }
 
     #[test]
-    fn test_story_deserialize_and_serialize() {
+    fn deserialize_and_serialize() {
         let story_json = json!({
             "id": 100000,
             "title": "A Story Title",
@@ -216,7 +216,7 @@ mod test {
     }
 
     #[test]
-    fn test_story_update_comparison() {
+    fn update_comparison() {
         let story = story!();
 
         assert_update!([Chapters chapter_count]: story, story!(chapter_count = 2));
@@ -247,7 +247,7 @@ mod test {
     }
 
     #[test]
-    fn test_story_update_order() {
+    fn update_comparison_order() {
         let story = story!();
         let datetime = datetime!(2021, 2, 14, 23, 0, 0);
 
