@@ -1,0 +1,7 @@
+download_dir = "~/some/path/to/dir"
+tracker_file = "~/path/of/file.json"
+download_format = "epub"
+download_delay = 10
+sensibility_level = 1
+exec = "wget -O ${download_dir}/${safe_title} https://www.fimfiction.net/story/download/${id}/${html}"
+quiet = false

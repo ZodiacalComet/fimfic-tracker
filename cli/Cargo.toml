@@ -1,0 +1,32 @@
+[package]
+name = "fimfic-tracker-cli"
+version = "0.1.0"
+authors = ["ZodiacalComet <ZodiacalComet@gmail.com>"]
+edition = "2018"
+
+build = "build.rs"
+
+[[bin]]
+name = "fimfic-tracker"
+path = "src/main.rs"
+doc = false
+
+[build-dependencies]
+clap = { version = "3", features = ["derive"] }
+clap_complete = "3"
+
+[dependencies.fimfic-tracker]
+path = "../core"
+version = "0.1"
+features = ["downloader"]
+
+[dependencies]
+clap = { version = "3", features = ["derive"] }
+console = "0.14"
+dialoguer = "0.8"
+chrono = "0.4"
+number_prefix = "0.4"
+chrono-humanize = "0.2"
+
+log = "0.4"
+env_logger = "0.9"

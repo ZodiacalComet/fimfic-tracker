@@ -1,0 +1,244 @@
+//! Story storage data (de)serialization.
+use serde::{Deserialize, Serialize};
+
+use crate::api::StoryStatus;
+use crate::errors::{self, TrackerError};
+
+/// Story data used for track data storage.
+///
+/// Meant to be constructed from a deserialized
+/// [`FimfictionResponse`](crate::api::FimfictionResponse) or
+/// [`StoryResponse`](crate::api::StoryResponse).
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Story {
+    /// Unique story ID.
+    pub id: u32,
+    /// Story title.
+    pub title: String,
+    /// Username of the author.
+    pub author: String,
+    /// The amount of chapters the story has.
+    #[serde(rename = "chapter-amt")]
+    pub chapter_count: u64,
+    /// The amount of words the story has.
+    pub words: u64,
+    /// Last update timestamp.
+    #[serde(rename = "last-update-timestamp")]
+    pub timestamp: i64,
+    /// Story completion status.
+    #[serde(rename = "completion-status")]
+    pub status: StoryStatus,
+}
+
+/// Kind of update present in a comparison between two [`Story`] structs.
+///
+/// Meant to be used as a result of [`Story::compare_to()`].
+#[derive(Debug)]
+pub enum StoryUpdate {
+    /// Story had a chapter update.
+    Chapters {
+        /// Amount of chapters before the update.
+        before: u64,
+        /// Amount of chapters after the update.
+        after: u64,
+    },
+    /// Story had a words update.
+    Words {
+        /// Amount of words before the update.
+        before: u64,
+        /// Amount of words after the update.
+        after: u64,
+    },
+    /// Story had an update.
+    Timestamp {
+        /// The timestamp before the update.
+        before: i64,
+        /// The timestamp after the update.
+        after: i64,
+    },
+}
+
+impl Story {
+    /// Gets the Fimfiction URL to the story.
+    pub fn url(&self) -> String {
+        format!("https://www.fimfiction.net/story/{}", self.id)
+    }
+
+    /// Checks for the existence of an update from the comparison with a more recent version of
+    /// [`Story`].
+    ///
+    /// It is done by comparing fields, in the following order:
+    /// 1. `chapter_count`, considered an update if both fields are different from each other. It
+    ///    is the most meaningful and visible update, so it has priority.
+    /// 2. `words`, considered an update if both fields aren't the same.
+    /// 3. `timestamp`, considered and update if `updated_story`'s timestamp is more recent. It is
+    ///    the least noticeable so it comes last.
+    ///
+    /// # Error
+    ///
+    /// If the ID of `updated_story` isn't the same as of `self`.
+    pub fn compare_to(&self, updated_story: &Story) -> errors::Result<Option<StoryUpdate>> {
+        if self.id != updated_story.id {
+            Err(TrackerError::story_comparison(self.id, updated_story.id))
+        } else if self.chapter_count != updated_story.chapter_count {
+            Ok(Some(StoryUpdate::Chapters {
+                before: self.chapter_count,
+                after: updated_story.chapter_count,
+            }))
+        } else if self.words != updated_story.words {
+            Ok(Some(StoryUpdate::Words {
+                before: self.words,
+                after: updated_story.words,
+            }))
+        } else if self.timestamp < updated_story.timestamp {
+            Ok(Some(StoryUpdate::Timestamp {
+                before: self.timestamp,
+                after: updated_story.timestamp,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use serde_json::json;
+
+    use errors::ErrorKind;
+
+    fn get_story(chapters: Option<u64>, words: Option<u64>, timestamp: Option<i64>) -> Story {
+        Story {
+            id: 100001,
+            title: "An Active Story".into(),
+            author: "A New Author".into(),
+            chapter_count: chapters.unwrap_or(5),
+            words: words.unwrap_or(12050),
+            timestamp: timestamp.unwrap_or(1611111600),
+            status: StoryStatus::Incomplete,
+        }
+    }
+
+    macro_rules! story {
+        () => {
+            get_story(None, None, None)
+        };
+        (chapter_count = $value:expr) => {
+            get_story(Some($value), None, None)
+        };
+        (words = $value:expr) => {
+            get_story(None, Some($value), None)
+        };
+        (timestamp = $value:expr) => {
+            get_story(None, None, Some($value))
+        };
+    }
+
+    macro_rules! assert_update {
+        ([$variant:ident $attr:ident]: $before:expr, $after:expr) => {
+            match $before.compare_to(&$after) {
+                Ok(Some(StoryUpdate::$variant { before, after })) => {
+                    assert_eq!(before, $before.$attr);
+                    assert_eq!(after, $after.$attr);
+                }
+                _ => unreachable!(),
+            }
+        };
+    }
+
+    macro_rules! assert_no_difference {
+        ($before:expr, $after:expr) => {
+            match $before.compare_to(&$after) {
+                Ok(None) => {}
+                _ => unreachable!(),
+            };
+        };
+    }
+
+    #[test]
+    fn test_story_deserialize_and_serialize() {
+        let story_json = json!({
+            "id": 100000,
+            "title": "A Story Title",
+            "author": "An Author",
+            "chapter-amt": 2,
+            "words": 10000,
+            "last-update-timestamp": 1607137200,
+            "completion-status": 0
+        })
+        .to_string();
+
+        let story: Story =
+            serde_json::from_str(&story_json).expect("couldn't deserialize json into Story");
+        assert_eq!(story.id, 100000);
+        assert_eq!(&story.title, "A Story Title");
+        assert_eq!(&story.author, "An Author");
+        assert_eq!(story.chapter_count, 2);
+        assert_eq!(story.words, 10000);
+        assert_eq!(story.timestamp, 1607137200);
+        assert_eq!(story.status, StoryStatus::Complete);
+        assert_eq!(story.url(), "https://www.fimfiction.net/story/100000");
+
+        let json = serde_json::to_string(&story).expect("couldn't serialize Story into json");
+        assert_eq!(json, story_json);
+    }
+
+    #[test]
+    fn test_story_update_comparison() {
+        let story = story!();
+
+        assert_update!([Chapters chapter_count]: story, story!(chapter_count = 2));
+        assert_update!([Chapters chapter_count]: story, story!(chapter_count = 9));
+        assert_update!([Words words]: story, story!(words = 9506));
+        assert_update!([Words words]: story, story!(words = 15042));
+        assert_update!([Timestamp timestamp]: story, story!(timestamp = 1613358000));
+        assert_no_difference!(story, story);
+        assert_no_difference!(story, story!(timestamp = 1610294400));
+
+        let another_story = Story {
+            id: 100002,
+            title: "Not 'An Active Story'".into(),
+            author: "Another Author".into(),
+            chapter_count: 12,
+            words: 14012,
+            timestamp: 1614567600,
+            status: StoryStatus::Incomplete,
+        };
+
+        match story.compare_to(&another_story).unwrap_err().kind {
+            ErrorKind::BadStoryComparison { id, other_id } => {
+                assert_eq!(id, 100001);
+                assert_eq!(other_id, 100002);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_story_update_order() {
+        let story = story!();
+
+        let update = get_story(Some(9), Some(15042), Some(1613358000));
+        assert_update!([Chapters chapter_count]: story, update);
+
+        let update = get_story(Some(9), Some(15042), None);
+        assert_update!([Chapters chapter_count]: story, update);
+
+        let update = get_story(Some(9), None, Some(1613358000));
+        assert_update!([Chapters chapter_count]: story, update);
+
+        let update = get_story(None, Some(15042), Some(1613358000));
+        assert_update!([Words words]: story, update);
+
+        let update = get_story(Some(9), None, None);
+        assert_update!([Chapters chapter_count]: story, update);
+
+        let update = get_story(None, Some(15042), None);
+        assert_update!([Words words]: story, update);
+
+        let update = get_story(None, None, Some(1613358000));
+        assert_update!([Timestamp timestamp]: story, update);
+    }
+}

@@ -1,0 +1,33 @@
+[package]
+name = "fimfic-tracker"
+version = "0.1.0"
+authors = ["ZodiacalComet <ZodiacalComet@gmail.com>"]
+edition = "2018"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+tempdir = "0.3"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+toml = "0.5"
+envy = "0.4"
+dirs-next = "2.0.0"
+shellexpand = "2.1.0"
+url = "2.2"
+indexmap = "1.5"
+tokio = { version = "1", features = ["fs"] }
+
+futures-util = { version = "0.3", features = ["io"], optional = true }
+reqwest = { version = "0.11", features = ["stream"], optional = true }
+shlex = { version = "1.1", optional = true }
+
+[features]
+default = []
+downloader = ["reqwest", "shlex", "futures-util", "tokio/process", "tokio/io-util", "tokio/rt-multi-thread"]
+
+[[test]]
+name = "download-story"
+path = "tests/download-story.rs"
+required-features = ["downloader"]
