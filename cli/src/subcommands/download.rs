@@ -37,7 +37,7 @@ macro_rules! format_update {
 macro_rules! info_story_checking {
     ($story:expr) => {
         info!("Checking for {} ...", format_story!($story));
-    }
+    };
 }
 
 macro_rules! info_update {
