@@ -25,7 +25,7 @@ pub fn list(story_data: &StoryData, List { short }: List) {
                 format!("words = {}", style(story.words).blue()),
                 format!(
                     "last-update-date = {}",
-                    style(ReadableDate(story.timestamp)).yellow()
+                    style(ReadableDate(story.update_datetime)).yellow()
                 ),
                 format!("status = {}", format_status!(story)),
             ]

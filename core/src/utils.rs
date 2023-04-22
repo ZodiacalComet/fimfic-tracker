@@ -40,7 +40,7 @@ pub fn download_url_format(story: &Story, format: DownloadFormat) -> Url {
 /// - `AUTHOR`: The value of `story.author`, safe to use as a filename.
 /// - `CHAPTERS`: The value of `story.chapter_count`.
 /// - `WORDS`: The value of `story.words`.
-/// - `UPDATE_TIMESTAMP`: The value of `story.timestamp`.
+/// - `UPDATE_TIMESTAMP`: The value of `story.update_datetime.timestamp()`.
 /// - `URL`: The value of `story.url()`.
 /// - `DOWNLOAD_URL`: Story download URL, in the form of
 ///   `"https://www.fimfiction.net/story/download/{ID}/{FORMAT}"`
@@ -63,7 +63,7 @@ where
             "AUTHOR" => Some(sanitize_filename(story.author.clone())),
             "CHAPTERS" => Some(story.chapter_count.to_string()),
             "WORDS" => Some(story.words.to_string()),
-            "UPDATE_TIMESTAMP" => Some(story.timestamp.timestamp().to_string()),
+            "UPDATE_TIMESTAMP" => Some(story.update_datetime.timestamp().to_string()),
             "URL" => Some(story.url()),
             "DOWNLOAD_URL" => Some(download_url_format(story, config.download_format).to_string()),
             "DOWNLOAD_DIR" => Some(config.download_dir.display().to_string()),
@@ -258,7 +258,7 @@ mod test {
             author: "An Author".into(),
             chapter_count: 5,
             words: 15017,
-            timestamp: Utc::now(),
+            update_datetime: Utc::now(),
             status: StoryStatus::Complete,
         };
 

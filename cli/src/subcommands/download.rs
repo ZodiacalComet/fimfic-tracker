@@ -173,7 +173,7 @@ pub fn download(
             {
                 info_update!(story, words, before => after);
             }
-            Some(StoryUpdate::Timestamp { before, after })
+            Some(StoryUpdate::DateTime { before, after })
                 if config.sensibility_level == SensibilityLevel::Anything =>
             {
                 info_update!(story, timestamp, before => after);
@@ -182,7 +182,7 @@ pub fn download(
                 info_update!([ignored] story, words, before => after);
                 continue;
             }
-            Some(StoryUpdate::Timestamp { before, after }) => {
+            Some(StoryUpdate::DateTime { before, after }) => {
                 info_update!([ignored] story, timestamp, before => after);
                 continue;
             }

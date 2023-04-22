@@ -24,7 +24,7 @@ pub struct Story {
     pub words: u64,
     /// Last update timestamp.
     #[serde(rename = "last-update-timestamp", with = "chrono::serde::ts_seconds")]
-    pub timestamp: DateTime<Utc>,
+    pub update_datetime: DateTime<Utc>,
     /// Story completion status.
     #[serde(rename = "completion-status")]
     pub status: StoryStatus,
@@ -38,7 +38,7 @@ impl From<StoryResponse> for Story {
             author: response.author.name,
             chapter_count: response.chapter_count,
             words: response.words,
-            timestamp: response.date_modified,
+            update_datetime: response.date_modified,
             status: response.status,
         }
     }
@@ -64,7 +64,7 @@ pub enum StoryUpdate {
         after: u64,
     },
     /// Story had an update.
-    Timestamp {
+    DateTime {
         /// The timestamp before the update.
         before: DateTime<Utc>,
         /// The timestamp after the update.
@@ -85,8 +85,8 @@ impl Story {
     /// 1. `chapter_count`, considered an update if both fields are different from each other. It
     ///    is the most meaningful and visible update, so it has priority.
     /// 2. `words`, considered an update if both fields aren't the same.
-    /// 3. `timestamp`, considered and update if `updated_story`'s timestamp is more recent. It is
-    ///    the least noticeable so it comes last.
+    /// 3. `update_datetime`, considered and update if `updated_story`'s timestamp is more recent.
+    ///    It is the least noticeable so it comes last.
     ///
     /// # Error
     ///
@@ -104,10 +104,10 @@ impl Story {
                 before: self.words,
                 after: updated_story.words,
             }))
-        } else if self.timestamp < updated_story.timestamp {
-            Ok(Some(StoryUpdate::Timestamp {
-                before: self.timestamp,
-                after: updated_story.timestamp,
+        } else if self.update_datetime < updated_story.update_datetime {
+            Ok(Some(StoryUpdate::DateTime {
+                before: self.update_datetime,
+                after: updated_story.update_datetime,
             }))
         } else {
             Ok(None)
@@ -138,7 +138,7 @@ mod test {
     fn get_story(
         chapters: Option<u64>,
         words: Option<u64>,
-        timestamp: Option<DateTime<Utc>>,
+        datetime: Option<DateTime<Utc>>,
     ) -> Story {
         Story {
             id: 100001,
@@ -146,7 +146,7 @@ mod test {
             author: "A New Author".into(),
             chapter_count: chapters.unwrap_or(5),
             words: words.unwrap_or(12050),
-            timestamp: timestamp.unwrap_or_else(|| datetime!(2021, 1, 19, 23, 0, 0)),
+            update_datetime: datetime.unwrap_or_else(|| datetime!(2021, 1, 19, 23, 0, 0)),
             status: StoryStatus::Incomplete,
         }
     }
@@ -161,7 +161,7 @@ mod test {
         (words = $value:expr) => {
             get_story(None, Some($value), None)
         };
-        (timestamp = $value:expr) => {
+        (datetime = $value:expr) => {
             get_story(None, None, Some($value))
         };
     }
@@ -207,7 +207,7 @@ mod test {
         assert_eq!(&story.author, "An Author");
         assert_eq!(story.chapter_count, 2);
         assert_eq!(story.words, 10000);
-        assert_eq!(story.timestamp, datetime!(1607137200));
+        assert_eq!(story.update_datetime, datetime!(1607137200));
         assert_eq!(story.status, StoryStatus::Complete);
         assert_eq!(story.url(), "https://www.fimfiction.net/story/100000");
 
@@ -223,9 +223,9 @@ mod test {
         assert_update!([Chapters chapter_count]: story, story!(chapter_count = 9));
         assert_update!([Words words]: story, story!(words = 9506));
         assert_update!([Words words]: story, story!(words = 15042));
-        assert_update!([Timestamp timestamp]: story, story!(timestamp = datetime!(2021, 2, 14, 23, 0, 0)));
+        assert_update!([DateTime update_datetime]: story, story!(datetime = datetime!(2021, 2, 14, 23, 0, 0)));
         assert_no_difference!(story, story);
-        assert_no_difference!(story, story!(timestamp = datetime!(2021, 1, 10, 12, 0, 0)));
+        assert_no_difference!(story, story!(datetime = datetime!(2021, 1, 10, 12, 0, 0)));
 
         let another_story = Story {
             id: 100002,
@@ -233,7 +233,7 @@ mod test {
             author: "Another Author".into(),
             chapter_count: 12,
             words: 14012,
-            timestamp: datetime!(2021, 2, 28, 23, 0, 0),
+            update_datetime: datetime!(2021, 2, 28, 23, 0, 0),
             status: StoryStatus::Incomplete,
         };
 
@@ -270,6 +270,6 @@ mod test {
         assert_update!([Words words]: story, update);
 
         let update = get_story(None, None, Some(datetime));
-        assert_update!([Timestamp timestamp]: story, update);
+        assert_update!([DateTime update_datetime]: story, update);
     }
 }
