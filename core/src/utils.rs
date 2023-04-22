@@ -246,9 +246,11 @@ impl StoryData {
 mod test {
     use super::*;
 
+    use chrono::Utc;
+
     #[test]
     fn test_download_url_builder() {
-        use crate::{api::StoryStatus, config::DownloadFormat};
+        use crate::{config::DownloadFormat, StoryStatus};
 
         let story = Story {
             id: 165,
@@ -256,7 +258,7 @@ mod test {
             author: "An Author".into(),
             chapter_count: 5,
             words: 15017,
-            timestamp: 111111,
+            timestamp: Utc::now(),
             status: StoryStatus::Complete,
         };
 

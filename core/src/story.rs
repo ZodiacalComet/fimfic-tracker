@@ -1,14 +1,14 @@
 //! Story storage data (de)serialization.
+use chrono::{offset::Utc, DateTime};
+use fimfiction_api::StoryStatus;
 use serde::{Deserialize, Serialize};
 
-use crate::api::StoryStatus;
 use crate::errors::{self, TrackerError};
+use crate::StoryResponse;
 
 /// Story data used for track data storage.
 ///
-/// Meant to be constructed from a deserialized
-/// [`FimfictionResponse`](crate::api::FimfictionResponse) or
-/// [`StoryResponse`](crate::api::StoryResponse).
+/// Meant to be constructed from a deserialized [`StoryResponse`].
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Story {
     /// Unique story ID.
@@ -23,11 +23,25 @@ pub struct Story {
     /// The amount of words the story has.
     pub words: u64,
     /// Last update timestamp.
-    #[serde(rename = "last-update-timestamp")]
-    pub timestamp: i64,
+    #[serde(rename = "last-update-timestamp", with = "chrono::serde::ts_seconds")]
+    pub timestamp: DateTime<Utc>,
     /// Story completion status.
     #[serde(rename = "completion-status")]
     pub status: StoryStatus,
+}
+
+impl From<StoryResponse> for Story {
+    fn from(response: StoryResponse) -> Self {
+        Story {
+            id: response.id,
+            title: response.title,
+            author: response.author.name,
+            chapter_count: response.chapter_count,
+            words: response.words,
+            timestamp: response.date_modified,
+            status: response.status,
+        }
+    }
 }
 
 /// Kind of update present in a comparison between two [`Story`] structs.
@@ -52,9 +66,9 @@ pub enum StoryUpdate {
     /// Story had an update.
     Timestamp {
         /// The timestamp before the update.
-        before: i64,
+        before: DateTime<Utc>,
         /// The timestamp after the update.
-        after: i64,
+        after: DateTime<Utc>,
     },
 }
 
@@ -105,18 +119,34 @@ impl Story {
 mod test {
     use super::*;
 
+    use chrono::TimeZone;
     use serde_json::json;
 
     use errors::ErrorKind;
 
-    fn get_story(chapters: Option<u64>, words: Option<u64>, timestamp: Option<i64>) -> Story {
+    macro_rules! datetime {
+        ($yy:expr, $mm:expr, $dd:expr, $h:expr, $m:expr, $s:expr) => {
+            Utc.with_ymd_and_hms($yy, $mm, $dd, $h, $m, $s)
+                .single()
+                .unwrap()
+        };
+        ($timestamp:expr) => {
+            Utc.timestamp_opt($timestamp, 0).single().unwrap()
+        };
+    }
+
+    fn get_story(
+        chapters: Option<u64>,
+        words: Option<u64>,
+        timestamp: Option<DateTime<Utc>>,
+    ) -> Story {
         Story {
             id: 100001,
             title: "An Active Story".into(),
             author: "A New Author".into(),
             chapter_count: chapters.unwrap_or(5),
             words: words.unwrap_or(12050),
-            timestamp: timestamp.unwrap_or(1611111600),
+            timestamp: timestamp.unwrap_or_else(|| datetime!(2021, 1, 19, 23, 0, 0)),
             status: StoryStatus::Incomplete,
         }
     }
@@ -177,7 +207,7 @@ mod test {
         assert_eq!(&story.author, "An Author");
         assert_eq!(story.chapter_count, 2);
         assert_eq!(story.words, 10000);
-        assert_eq!(story.timestamp, 1607137200);
+        assert_eq!(story.timestamp, datetime!(1607137200));
         assert_eq!(story.status, StoryStatus::Complete);
         assert_eq!(story.url(), "https://www.fimfiction.net/story/100000");
 
@@ -193,9 +223,9 @@ mod test {
         assert_update!([Chapters chapter_count]: story, story!(chapter_count = 9));
         assert_update!([Words words]: story, story!(words = 9506));
         assert_update!([Words words]: story, story!(words = 15042));
-        assert_update!([Timestamp timestamp]: story, story!(timestamp = 1613358000));
+        assert_update!([Timestamp timestamp]: story, story!(timestamp = datetime!(2021, 2, 14, 23, 0, 0)));
         assert_no_difference!(story, story);
-        assert_no_difference!(story, story!(timestamp = 1610294400));
+        assert_no_difference!(story, story!(timestamp = datetime!(2021, 1, 10, 12, 0, 0)));
 
         let another_story = Story {
             id: 100002,
@@ -203,7 +233,7 @@ mod test {
             author: "Another Author".into(),
             chapter_count: 12,
             words: 14012,
-            timestamp: 1614567600,
+            timestamp: datetime!(2021, 2, 28, 23, 0, 0),
             status: StoryStatus::Incomplete,
         };
 
@@ -219,17 +249,18 @@ mod test {
     #[test]
     fn test_story_update_order() {
         let story = story!();
+        let datetime = datetime!(2021, 2, 14, 23, 0, 0);
 
-        let update = get_story(Some(9), Some(15042), Some(1613358000));
+        let update = get_story(Some(9), Some(15042), Some(datetime));
         assert_update!([Chapters chapter_count]: story, update);
 
         let update = get_story(Some(9), Some(15042), None);
         assert_update!([Chapters chapter_count]: story, update);
 
-        let update = get_story(Some(9), None, Some(1613358000));
+        let update = get_story(Some(9), None, Some(datetime));
         assert_update!([Chapters chapter_count]: story, update);
 
-        let update = get_story(None, Some(15042), Some(1613358000));
+        let update = get_story(None, Some(15042), Some(datetime));
         assert_update!([Words words]: story, update);
 
         let update = get_story(Some(9), None, None);
@@ -238,7 +269,7 @@ mod test {
         let update = get_story(None, Some(15042), None);
         assert_update!([Words words]: story, update);
 
-        let update = get_story(None, None, Some(1613358000));
+        let update = get_story(None, None, Some(datetime));
         assert_update!([Timestamp timestamp]: story, update);
     }
 }

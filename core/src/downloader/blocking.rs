@@ -1,9 +1,9 @@
 use tokio::runtime::Runtime;
 
-use crate::api::StoryResponse;
 use crate::config::Config;
 use crate::errors;
 use crate::story::Story;
+use crate::StoryResponse;
 
 use super::listener::ProgressListener;
 use super::sync::AsyncRequester;

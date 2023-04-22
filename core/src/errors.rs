@@ -1,3 +1,4 @@
+use fimfiction_api::StoryError;
 use std::{error::Error, fmt, io};
 
 /// An alias of [`Result`] for all of its instances across the crate.
@@ -13,7 +14,7 @@ pub enum ErrorKind {
         /// The raw response that caused the error.
         response: String,
         /// The error being thrown.
-        error: serde_json::Error,
+        error: StoryError,
     },
     /// An error made while trying to compare two [`Story`](crate::story::Story) structs of
     /// different IDs.
@@ -67,7 +68,7 @@ impl TrackerError {
 
     /// Constructs a [`TrackerError`] of kind
     /// [`UnexpectedResponse`](ErrorKind::UnexpectedResponse).
-    pub fn unexpected_response(err: serde_json::Error, response: String) -> Self {
+    pub fn unexpected_response(err: StoryError, response: String) -> Self {
         TrackerError::with(ErrorKind::UnexpectedResponse {
             response,
             error: err,

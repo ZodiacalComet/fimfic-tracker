@@ -13,6 +13,7 @@ tempdir = "0.3"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
+chrono = { version = "0.4", features = ["serde"] }
 toml = "0.5"
 envy = "0.4"
 dirs-next = "2.0.0"
@@ -24,6 +25,11 @@ tokio = { version = "1", features = ["fs"] }
 futures-util = { version = "0.3", features = ["io"], optional = true }
 reqwest = { version = "0.11", features = ["stream"], optional = true }
 shlex = { version = "1.1", optional = true }
+
+[dependencies.fimfiction-api]
+git = "https://github.com/ZodiacalComet/deserialize-fimfic-api.git"
+rev = "942b70a"
+features = ["chrono"]
 
 [features]
 default = []

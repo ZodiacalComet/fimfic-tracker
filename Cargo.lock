@@ -83,6 +83,7 @@ dependencies = [
  "js-sys",
  "num-integer",
  "num-traits",
+ "serde",
  "time",
  "wasm-bindgen",
  "winapi",
@@ -354,8 +355,10 @@ dependencies = [
 name = "fimfic-tracker"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "dirs-next",
  "envy",
+ "fimfiction-api",
  "futures-util",
  "indexmap",
  "reqwest",
@@ -383,6 +386,17 @@ dependencies = [
  "fimfic-tracker",
  "log",
  "number_prefix",
+]
+
+[[package]]
+name = "fimfiction-api"
+version = "0.1.0"
+source = "git+https://github.com/ZodiacalComet/deserialize-fimfic-api.git?rev=942b70a#942b70aa08c6d254f194a0b742227529e4d899a6"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

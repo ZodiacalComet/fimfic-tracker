@@ -34,29 +34,28 @@
 //! ```
 //!
 //! While is possible to manually construct a [`Story`] struct, is recommended to create it from
-//! either a deserialized [`FimfictionResponse`] or [`StoryResponse`](api::StoryResponse).
+//! a deserialized [`StoryResponse`] ([`fimfiction_api::from_str()`]).
 //!
 //! # Optional feature
 //!
-//! The `downloader` enables structs to easily create [`StoryResponse`](api::StoryResponse)s and
-//! execute downloads for stories for either synchronous or asynchronous contexts.
+//! The `downloader` enables structs to easily create [`StoryResponse`]s and execute downloads for
+//! stories for either synchronous or asynchronous contexts.
 #![warn(missing_docs)]
 
 mod config;
 mod errors;
 
-pub mod api;
 #[cfg(feature = "downloader")]
 pub mod downloader;
 pub mod story;
 mod utils;
 
-#[doc(inline)]
-pub use api::{FimfictionResponse, StoryStatus};
 pub use config::{
     Config, ConfigBuilder, DownloadFormat, SensibilityLevel, DEFAULT_ENVIRONMENT_PREFIX,
 };
 pub use errors::{ErrorKind, Result, TrackerError};
+#[doc(inline)]
+pub use fimfiction_api::{Story as StoryResponse, StoryStatus};
 #[doc(inline)]
 pub use story::{Story, StoryUpdate};
 #[doc(inline)]

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use chrono::{Local, TimeZone};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use number_prefix::NumberPrefix;
 
@@ -15,11 +15,11 @@ impl fmt::Display for ReadableBytes {
     }
 }
 
-pub struct ReadableDate(pub i64);
+pub struct ReadableDate(pub DateTime<Utc>);
 
 impl fmt::Display for ReadableDate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let date = Local.timestamp(self.0, 0);
+        let date = Local.from_utc_datetime(&self.0.naive_utc());
         write!(
             f,
             "{} ({})",

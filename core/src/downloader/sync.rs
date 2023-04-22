@@ -1,15 +1,15 @@
-use std::{convert::TryInto, process::Stdio};
+use std::process::Stdio;
 
 use futures_util::StreamExt;
 use reqwest;
 use tokio::{fs, io, process::Command};
 use url::Url;
 
-use crate::api::{FimfictionResponse, StoryResponse};
 use crate::config::Config;
 use crate::errors::{self, TrackerError};
 use crate::story::Story;
 use crate::utils::{download_url_format, env_with_command_context, sanitize_filename};
+use crate::StoryResponse;
 
 use super::listener::ProgressListener;
 
@@ -101,7 +101,7 @@ where
         )
         .expect("Fimficiton API URL parse failed");
 
-        let response: FimfictionResponse = self
+        let json = self
             .client
             .get(url)
             .send()
@@ -112,10 +112,9 @@ where
             .map_err(|err| {
                 TrackerError::custom(err)
                     .context("Couldn't decode the Fimfiction API response body")
-            })
-            .and_then(|json_res| json_res.try_into())?;
+            })?;
 
-        Ok(response.story)
+        fimfiction_api::from_str(&json).map_err(|err| TrackerError::unexpected_response(err, json))
     }
 
     /// Downloads `story` from Fimfiction into the download directory in the
