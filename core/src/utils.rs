@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use directories::ProjectDirs;
 use indexmap::IndexMap;
 use shellexpand::env_with_context;
 
@@ -14,12 +15,30 @@ use crate::config::{Config, DownloadFormat};
 use crate::errors::{self, ErrorKind, TrackerError};
 use crate::story::Story;
 
-/// Path to the default location of the user's `config.toml` file if possible.
+#[cfg(any(target_os = "windows", target_os = "macos"))]
+static APPLICATION_NAME: &str = "Fimfiction Tracker";
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+static APPLICATION_NAME: &str = "fimfic-tracker";
+
+lazy_static! {
+    pub(crate) static ref PROJECT_DIRS: ProjectDirs = ProjectDirs::from("", "", APPLICATION_NAME)
+        .expect("fimfic-tracker project directories should be retrievable");
+}
+
+// TODO: Is `Local` the correct directory for the configuration and tracker file on Windows?
+
+/// Path to the default location of the user's `config.toml` file.
 ///
-/// Located on a "fimfic-tracker" directory inside the system's config directory as obtained from
-/// [`dirs_next::config_dir()`].
-pub fn default_user_config_file() -> Option<PathBuf> {
-    dirs_next::config_dir().map(|p| p.join("fimfic-tracker").join("config.toml"))
+/// The directory corresponds to [`ProjectDirs::config_local_dir()`].
+pub fn default_user_config_file() -> PathBuf {
+    PROJECT_DIRS.config_local_dir().join("config.toml")
+}
+
+/// Path to the default location of the user's `track-data.json` file.
+///
+/// The directory corresponds to [`ProjectDirs::data_local_dir()`].
+pub fn default_user_tracker_file() -> PathBuf {
+    PROJECT_DIRS.data_local_dir().join("track-data.json")
 }
 
 /// Creates a Fimfiction story download [`Url`] to the [`Story`] in the given

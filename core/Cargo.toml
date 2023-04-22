@@ -16,7 +16,8 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 chrono = { version = "0.4", features = ["serde"] }
 toml = { version = "0.7", default-features = false, features = ["parse"] }
 envy = "0.4"
-dirs-next = "2.0.0"
+directories = "5"
+lazy_static = "1.4"
 shellexpand = "2.1.0"
 url = "2.2"
 indexmap = "1.5"

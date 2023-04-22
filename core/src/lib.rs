@@ -41,6 +41,8 @@
 //! The `downloader` enables structs to easily create [`StoryResponse`]s and execute downloads for
 //! stories for either synchronous or asynchronous contexts.
 #![warn(missing_docs)]
+#[macro_use]
+extern crate lazy_static;
 
 mod config;
 mod errors;
@@ -60,5 +62,6 @@ pub use fimfiction_api::{Story as StoryResponse, StoryStatus};
 pub use story::{Story, StoryUpdate};
 #[doc(inline)]
 pub use utils::{
-    default_user_config_file, download_url_format, env_with_command_context, StoryData,
+    default_user_config_file, default_user_tracker_file, download_url_format,
+    env_with_command_context, StoryData,
 };

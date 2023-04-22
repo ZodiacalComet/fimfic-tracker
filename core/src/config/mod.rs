@@ -1,12 +1,15 @@
 use std::path::{Path, PathBuf};
 
+use directories::UserDirs;
 use serde::Deserialize;
 
 mod format;
 mod sensibility;
 
 use crate::errors::{self, TrackerError};
-use crate::utils::{async_read_to_string, default_user_config_file, read_to_string};
+use crate::utils::{
+    async_read_to_string, default_user_config_file, default_user_tracker_file, read_to_string,
+};
 pub use format::DownloadFormat;
 pub use sensibility::SensibilityLevel;
 
@@ -51,6 +54,17 @@ pub struct ConfigBuilder {
     sensibility_level: Option<SensibilityLevel>,
     exec: Option<String>,
     quiet: Option<bool>,
+}
+
+macro_rules! default_config_file {
+    ($path:ident => $config:expr,) => {{
+        let $path = default_user_config_file();
+        if $path.is_file() {
+            $config
+        } else {
+            ConfigBuilder::new()
+        }
+    }};
 }
 
 impl Default for ConfigBuilder {
@@ -193,9 +207,8 @@ impl ConfigBuilder {
     /// They are returned according to [`ConfigBuilder::from_file()`] and
     /// [`ConfigBuilder::from_env()`].
     pub fn from_default_sources() -> errors::Result<Self> {
-        let config = match default_user_config_file() {
-            Some(config_file) if config_file.is_file() => ConfigBuilder::from_file(config_file)?,
-            _ => ConfigBuilder::new(),
+        let config = default_config_file! {
+            path => ConfigBuilder::from_file(path)?,
         };
 
         Ok(config.merge(ConfigBuilder::from_env(DEFAULT_ENVIRONMENT_PREFIX)?))
@@ -204,11 +217,8 @@ impl ConfigBuilder {
     /// Asynchronous version of [`ConfigBuilder::from_default_sources()`] that makes use of
     /// [`ConfigBuilder::async_from_file()`] instead.
     pub async fn async_from_default_sources() -> errors::Result<Self> {
-        let config = match default_user_config_file() {
-            Some(config_file) if config_file.is_file() => {
-                ConfigBuilder::async_from_file(config_file).await?
-            }
-            _ => ConfigBuilder::new(),
+        let config = default_config_file! {
+            path => ConfigBuilder::async_from_file(path).await?,
         };
 
         Ok(config.merge(ConfigBuilder::from_env(DEFAULT_ENVIRONMENT_PREFIX)?))
@@ -222,13 +232,11 @@ impl ConfigBuilder {
 pub struct Config {
     /// Path to the story download directory, expanding tilde into home directory.
     ///
-    /// Defaults to directory obtained from
-    /// [`dirs_next::download_dir()`](https://docs.rs/dirs-next/2.0.0/dirs_next/fn.download_dir.html).
+    /// Defaults to [`UserDirs::download_dir()`], panics if it can't be retrieved.
     pub download_dir: PathBuf,
     /// Path of the tracker file, expanding tilde into home directory.
     ///
-    /// Defaults to `fimfic-tracker/track-data.json` inside directory obtained from
-    /// [`dirs_next::data_local_dir()`](https://docs.rs/dirs-next/2.0.0/dirs_next/fn.data_local_dir.html).
+    /// Defaults to [`default_user_tracker_file()`].
     pub tracker_file: PathBuf,
     /// The format in which to download the stories.
     ///
@@ -255,23 +263,23 @@ pub struct Config {
     pub quiet: bool,
 }
 
+lazy_static! {
+    static ref DEFAULT_DOWNLOAD_DIR: PathBuf = UserDirs::new()
+        .and_then(|dirs| dirs.download_dir().map(|path| path.to_path_buf()))
+        .expect("user download dir should be retrievable");
+}
+
 impl From<ConfigBuilder> for Config {
     fn from(c: ConfigBuilder) -> Self {
         Config {
             download_dir: c
                 .download_dir
                 .map(|s| shellexpand::tilde(&s).into_owned().into())
-                .unwrap_or_else(|| {
-                    dirs_next::download_dir().expect("failed to get default download dir")
-                }),
+                .unwrap_or_else(|| DEFAULT_DOWNLOAD_DIR.clone()),
             tracker_file: c
                 .tracker_file
                 .map(|s| shellexpand::tilde(&s).into_owned().into())
-                .unwrap_or_else(|| {
-                    dirs_next::data_local_dir()
-                        .map(|p| p.join("fimfic-tracker").join("track-data.json"))
-                        .expect("failed to get default tracker file path")
-                }),
+                .unwrap_or_else(default_user_tracker_file),
             download_format: c.download_format.unwrap_or(DownloadFormat::HTML),
             download_delay: c.download_delay.unwrap_or(5),
             sensibility_level: c
