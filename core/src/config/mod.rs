@@ -331,7 +331,7 @@ mod test {
     macro_rules! config_path {
         ($filename:literal) => {
             concat!(env!("CARGO_MANIFEST_DIR"), "/config/", $filename)
-        }
+        };
     }
 
     #[test]
