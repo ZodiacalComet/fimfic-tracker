@@ -72,7 +72,7 @@ sensibility_level = 0
 #   "https://www.fimfiction.net/story/download/$ID/$FORMAT"
 #
 # Available configuration variables:
-# - DOWNLOAD_DIR: The expanded path of the download directory.
+# - DOWNLOAD_DIR: The absolute path of the download directory.
 # - FORMAT: The value of download_format.
 #
 # Can be set from environment with: FFT_EXEC
