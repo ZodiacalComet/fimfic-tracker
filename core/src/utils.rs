@@ -63,7 +63,7 @@ where
             "AUTHOR" => Some(sanitize_filename(story.author.clone())),
             "CHAPTERS" => Some(story.chapter_count.to_string()),
             "WORDS" => Some(story.words.to_string()),
-            "UPDATE_TIMESTAMP" => Some(story.timestamp.to_string()),
+            "UPDATE_TIMESTAMP" => Some(story.timestamp.timestamp().to_string()),
             "URL" => Some(story.url()),
             "DOWNLOAD_URL" => Some(download_url_format(story, config.download_format).to_string()),
             "DOWNLOAD_DIR" => Some(config.download_dir.display().to_string()),
