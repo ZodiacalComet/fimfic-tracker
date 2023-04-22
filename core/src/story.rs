@@ -85,7 +85,7 @@ impl Story {
     /// 1. `chapter_count`, considered an update if both fields are different from each other. It
     ///    is the most meaningful and visible update, so it has priority.
     /// 2. `words`, considered an update if both fields aren't the same.
-    /// 3. `update_datetime`, considered and update if `updated_story`'s timestamp is more recent.
+    /// 3. `update_datetime`, considered an update if `updated_story`'s timestamp is more recent.
     ///    It is the least noticeable so it comes last.
     ///
     /// # Error
