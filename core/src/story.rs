@@ -22,7 +22,7 @@ pub struct Story {
     pub chapter_count: u64,
     /// The amount of words the story has.
     pub words: u64,
-    /// Last update timestamp.
+    /// Datetime of the last update.
     #[serde(rename = "last-update-timestamp", with = "chrono::serde::ts_seconds")]
     pub update_datetime: DateTime<Utc>,
     /// Story completion status.
