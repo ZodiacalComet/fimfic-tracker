@@ -2,6 +2,8 @@
 name = "fimfic-tracker"
 version = "0.1.0"
 authors = ["ZodiacalComet <ZodiacalComet@gmail.com>"]
+description = "Provides all of the non interface specific code used for fimfic-tracker."
+license = "Unlicense"
 edition = "2018"
 
 [dev-dependencies]

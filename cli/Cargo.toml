@@ -2,6 +2,8 @@
 name = "fimfic-tracker-cli"
 version = "0.1.0"
 authors = ["ZodiacalComet <ZodiacalComet@gmail.com>"]
+description = "An unnecessary CLI application for tracking Fimfiction stories."
+license = "Unlicense"
 edition = "2018"
 
 build = "build.rs"
