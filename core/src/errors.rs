@@ -105,19 +105,21 @@ impl TrackerError {
 
 impl fmt::Display for TrackerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(message) = &self.context {
+            write!(f, "{}: ", message)?;
+        }
+
         match &self.kind {
             ErrorKind::UnexpectedResponse { ref error, .. } => {
-                write!(f, "Response error: ")?;
-                error.fmt(f)?;
+                write!(f, "error parsing response: {}", err)?;
             }
             ErrorKind::Io(ref err) => {
-                write!(f, "IO error: ")?;
-                err.fmt(f)?;
+                write!(f, "IO error: {}", err)?;
             }
             ErrorKind::BadStoryComparison { id, other_id } => {
                 write!(
                     f,
-                    "Error: Cannot compare for update when story ID's aren't the same ({} != {})",
+                    "cannot compare for update when story ID's aren't the same ({} != {})",
                     id, other_id
                 )?;
             }
@@ -125,21 +127,18 @@ impl fmt::Display for TrackerError {
                 ref origin,
                 ref cause,
             } => {
-                write!(f, "Configuration error: ")?;
-                cause.fmt(f)?;
+                write!(f, "error parsing configuration")?;
 
                 if let Some(origin) = origin {
-                    write!(f, " in {}", origin)?;
+                    write!(f, " in `{}`", origin)?;
                 }
+
+                write!(": {}", cause)?;
             }
             ErrorKind::Custom(err) => {
-                write!(f, "Error: {}", err)?;
+                write!(f, "{}", err)?;
             }
         };
-
-        if let Some(message) = &self.context {
-            write!(f, "\n{}", message)?;
-        }
 
         Ok(())
     }
