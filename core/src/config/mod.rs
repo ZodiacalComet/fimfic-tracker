@@ -415,6 +415,14 @@ mod test {
             .sensibility_level(SensibilityLevel::Anything)
             .quiet(true);
 
+        let another_config = ConfigBuilder::new()
+            .download_format(DownloadFormat::TXT)
+            .download_delay(1)
+            .sensibility_level(SensibilityLevel::IncludeWords)
+            .exec("/path/to/script $id")
+            .quiet(false);
+
+        // Merging two configs
         assert_config_merge!(
             [config <= other_config]
             download_dir == "/path/to/download";
@@ -425,13 +433,17 @@ mod test {
             quiet == true;
         );
 
-        let another_config = ConfigBuilder::new()
-            .download_format(DownloadFormat::TXT)
-            .download_delay(1)
-            .sensibility_level(SensibilityLevel::IncludeWords)
-            .exec("/path/to/script $id")
-            .quiet(false);
+        assert_config_merge!(
+            [other_config <= config]
+            download_dir == "~/Download";
+            tracker_file == "/path/to/tracker-cache.json";
+            download_format == DownloadFormat::EPUB;
+            download_delay == 0;
+            sensibility_level == SensibilityLevel::Anything;
+            quiet == false;
+        );
 
+        // Merging tree configs
         assert_config_merge!(
             [config <= other_config <= another_config]
             download_dir == "/path/to/download";
@@ -439,6 +451,39 @@ mod test {
             download_format == DownloadFormat::TXT;
             download_delay == 1;
             sensibility_level == SensibilityLevel::IncludeWords;
+            exec == "/path/to/script $id";
+            quiet == false;
+        );
+
+        assert_config_merge!(
+            [another_config <= config <= other_config]
+            download_dir == "/path/to/download";
+            tracker_file == "/path/to/tracker-cache.json";
+            download_format == DownloadFormat::EPUB;
+            download_delay == 0;
+            sensibility_level == SensibilityLevel::Anything;
+            exec == "/path/to/script $id";
+            quiet == true;
+        );
+
+        assert_config_merge!(
+            [other_config <= another_config <= config]
+            download_dir == "~/Download";
+            tracker_file == "/path/to/tracker-cache.json";
+            download_format == DownloadFormat::EPUB;
+            download_delay == 0;
+            sensibility_level == SensibilityLevel::IncludeWords;
+            exec == "/path/to/script $id";
+            quiet == false;
+        );
+
+        assert_config_merge!(
+            [another_config <= other_config <= config]
+            download_dir == "~/Download";
+            tracker_file == "/path/to/tracker-cache.json";
+            download_format == DownloadFormat::EPUB;
+            download_delay == 0;
+            sensibility_level == SensibilityLevel::Anything;
             exec == "/path/to/script $id";
             quiet == false;
         );
