@@ -2,7 +2,7 @@ use clap::{
     arg,
     builder::{Command, NonEmptyStringValueParser, TypedValueParser},
     error::{ContextKind, ContextValue, Error, ErrorKind, RichFormatter},
-    Arg, ArgAction, ArgMatches, FromArgMatches, Parser, Subcommand, ValueHint,
+    Arg, ArgAction, ArgMatches, ColorChoice, FromArgMatches, Parser, Subcommand, ValueHint,
 };
 
 #[derive(Parser, Debug, PartialEq)]
@@ -22,6 +22,9 @@ pub struct Args {
     /// Shows verbose output, can be used multiple times to set level of verbosity.
     #[clap(short, long, display_order = 2, action(ArgAction::Count))]
     pub verbose: u8,
+    /// When to use colors.
+    #[clap(long, display_order = 3, value_enum, default_value_t)]
+    pub color: ColorChoice,
     #[clap(subcommand)]
     pub subcommand: SubCommand,
 }

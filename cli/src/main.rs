@@ -84,7 +84,7 @@ fn run(args: Args) -> Result<()> {
 
 fn main() {
     let args = Args::parse();
-    logger::configure(args.verbose);
+    logger::configure(args.verbose, args.color);
 
     if let Err(err) = run(args) {
         match &err.kind {

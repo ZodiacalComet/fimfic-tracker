@@ -1,5 +1,6 @@
 use std::{fmt::Arguments, io::Write};
 
+use clap::ColorChoice;
 use console::style;
 use log::{Level, LevelFilter};
 
@@ -21,7 +22,16 @@ fn indent_args(args: &Arguments<'_>) -> String {
         .join("\n")
 }
 
-pub fn configure(verbose: u8) {
+pub fn configure(verbose: u8, color_choice: ColorChoice) {
+    // By default, `Style` is made to "point" to stdout from `console`'s point of view.
+    // This means that we only need to set colors for stdout to effectively affect all styling done
+    // in the application.
+    match color_choice {
+        ColorChoice::Always => console::set_colors_enabled(true),
+        ColorChoice::Never => console::set_colors_enabled(false),
+        _ => {}
+    };
+
     let mut builder = env_logger::builder();
 
     if verbose == 0 {
