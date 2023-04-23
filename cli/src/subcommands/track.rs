@@ -1,7 +1,7 @@
 use console::style;
 use dialoguer::Confirm;
 
-use fimfic_tracker::{Config, Result, Story, StoryData, TrackerError};
+use fimfic_tracker::{Config, Id, Result, Story, StoryData, TrackerError};
 
 use crate::args::Track;
 use crate::Requester;
@@ -16,7 +16,7 @@ pub fn track(
         ref stories,
     }: Track,
 ) -> Result<()> {
-    let mut to_track: Vec<&String> = Vec::with_capacity(stories.len());
+    let mut to_track: Vec<Id> = Vec::with_capacity(stories.len());
     let mut printed = false;
 
     for id in stories {
@@ -48,7 +48,7 @@ pub fn track(
             }
         }
 
-        to_track.push(id);
+        to_track.push(*id);
     }
 
     if to_track.is_empty() {
@@ -65,7 +65,7 @@ pub fn track(
         progress_or_info!("Downloading story data for {}", style(id).blue());
         let story: Story = requester.get_story_response(id)?.into();
 
-        story_data.insert(id.to_string(), story.clone());
+        story_data.insert(id, story.clone());
 
         clear_last_lines!();
         info!("{} added to the tracking list", format_story!(story));

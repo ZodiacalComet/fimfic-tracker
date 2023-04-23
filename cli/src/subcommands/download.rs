@@ -4,7 +4,7 @@ use console::style;
 use dialoguer::Confirm;
 
 use fimfic_tracker::{
-    Config, Result, SensibilityLevel, Story, StoryData, StoryStatus, StoryUpdate, TrackerError,
+    Config, Id, Result, SensibilityLevel, Story, StoryData, StoryStatus, StoryUpdate, TrackerError,
 };
 
 use crate::args::{Download, Prompt};
@@ -68,12 +68,16 @@ pub fn download(
         ref ids,
     }: Download,
 ) -> Result<()> {
-    let selected_ids: Vec<&String> = if ids.is_empty() {
-        story_data.keys().collect()
+    let selected_ids: Vec<Id> = if ids.is_empty() {
+        story_data.keys().cloned().collect()
     } else {
-        story_data.keys().filter(|id| ids.contains(id)).collect()
+        story_data
+            .keys()
+            .filter(|id| ids.contains(id))
+            .cloned()
+            .collect()
     };
-    let mut ignored_ids: HashSet<&String> = HashSet::with_capacity(selected_ids.len());
+    let mut ignored_ids: HashSet<Id> = HashSet::with_capacity(selected_ids.len());
 
     let mut printed = false;
 
@@ -85,10 +89,13 @@ pub fn download(
         };
     }
 
-    for (id, story) in story_data
-        .iter()
-        .filter(|(id, _)| selected_ids.contains(id))
-    {
+    for (id, story) in story_data.iter().filter_map(|(id, story)| {
+        if selected_ids.contains(id) {
+            Some((*id, story))
+        } else {
+            None
+        }
+    }) {
         if let StoryStatus::Incomplete = story.status {
             continue;
         }
@@ -133,12 +140,13 @@ pub fn download(
         printed = false;
     }
 
-    let mut updated_stories: HashMap<String, Story> = HashMap::with_capacity(selected_ids.len());
-    let mut ids_to_download: HashSet<&String> = HashSet::with_capacity(selected_ids.len());
+    let mut updated_stories: HashMap<Id, Story> = HashMap::with_capacity(selected_ids.len());
+    let mut ids_to_download: HashSet<Id> = HashSet::with_capacity(selected_ids.len());
 
     for (id, story) in story_data
         .iter()
         .filter(|(id, _)| selected_ids.contains(id) && !ignored_ids.contains(id))
+        .map(|(id, story)| (*id, story))
     {
         info_story_checking!(story);
         let updated_story: Story = requester.get_story_response(id)?.into();
@@ -159,7 +167,7 @@ pub fn download(
                 info_story_checking!(story);
             }
 
-            updated_stories.insert(id.to_string(), updated_story);
+            updated_stories.insert(id, updated_story);
         }
 
         clear_last_lines!();
@@ -197,7 +205,7 @@ pub fn download(
             .keys()
             .filter(|id| selected_ids.contains(id) && !ignored_ids.contains(id))
         {
-            ids_to_download.insert(id);
+            ids_to_download.insert(*id);
         }
     }
 

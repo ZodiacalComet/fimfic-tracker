@@ -13,7 +13,7 @@ use url::Url;
 
 use crate::config::{Config, DownloadFormat};
 use crate::errors::{self, ErrorKind, TrackerError};
-use crate::story::Story;
+use crate::story::{Id, Story};
 
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 static APPLICATION_NAME: &str = "Fimfiction Tracker";
@@ -161,11 +161,11 @@ where
 #[derive(Debug)]
 pub struct StoryData {
     path: String,
-    data: IndexMap<String, Story>,
+    data: IndexMap<Id, Story>,
 }
 
 impl Deref for StoryData {
-    type Target = IndexMap<String, Story>;
+    type Target = IndexMap<Id, Story>;
 
     fn deref(&self) -> &Self::Target {
         &self.data
@@ -199,8 +199,8 @@ impl StoryData {
         })?;
         self.data = stories
             .drain(..)
-            .map(|s| (s.id.to_string(), s))
-            .collect::<IndexMap<String, Story>>();
+            .map(|story| (story.id, story))
+            .collect::<IndexMap<Id, Story>>();
 
         Ok(())
     }

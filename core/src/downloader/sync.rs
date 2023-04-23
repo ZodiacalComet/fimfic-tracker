@@ -7,7 +7,7 @@ use url::Url;
 
 use crate::config::Config;
 use crate::errors::{self, TrackerError};
-use crate::story::Story;
+use crate::story::{Id, Story};
 use crate::utils::{download_url_format, env_with_command_context, sanitize_filename};
 use crate::StoryResponse;
 
@@ -60,7 +60,7 @@ where
 /// let requester = AsyncRequester::new(config, SilentListener {});
 ///
 /// // Requesting "The Moon's Apprentice" by Forthwith
-/// let story = requester.get_story_response("196256").await?;
+/// let story = requester.get_story_response(196256).await?;
 /// println!("{:?}", story);
 ///
 /// // Download story according to the configuration file.
@@ -90,14 +90,11 @@ where
         }
     }
 
-    /// Requests the [`StoryResponse`] of the given ID or URL from Fimfiction.
-    pub async fn get_story_response<T>(&self, id_or_url: T) -> errors::Result<StoryResponse>
-    where
-        T: AsRef<str>,
-    {
+    /// Requests the [`StoryResponse`] of the given Fimfiction story ID.
+    pub async fn get_story_response(&self, id: Id) -> errors::Result<StoryResponse> {
         let url = Url::parse_with_params(
             "https://www.fimfiction.net/api/story.php",
-            &[("story", id_or_url)],
+            &[("story", id.to_string())],
         )
         .expect("Fimficiton API URL parse failed");
 

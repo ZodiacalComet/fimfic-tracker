@@ -6,13 +6,16 @@ use serde::{Deserialize, Serialize};
 use crate::errors::{self, TrackerError};
 use crate::StoryResponse;
 
+/// Alias for a [`Story`] ID.
+pub type Id = u32;
+
 /// Story data used for track data storage.
 ///
 /// Meant to be constructed from a deserialized [`StoryResponse`].
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Story {
     /// Unique story ID.
-    pub id: u32,
+    pub id: Id,
     /// Story title.
     pub title: String,
     /// Username of the author.

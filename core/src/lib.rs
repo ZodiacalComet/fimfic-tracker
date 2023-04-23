@@ -59,7 +59,7 @@ pub use errors::{ErrorKind, Result, TrackerError};
 #[doc(inline)]
 pub use fimfiction_api::{Story as StoryResponse, StoryStatus};
 #[doc(inline)]
-pub use story::{Story, StoryUpdate};
+pub use story::{Id, Story, StoryUpdate};
 #[doc(inline)]
 pub use utils::{
     default_user_config_file, default_user_tracker_file, download_url_format,

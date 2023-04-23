@@ -1,10 +1,10 @@
 // TODO: Example or test?
 use tempdir::TempDir;
 
-use fimfic_tracker::{downloader::ProgressListener, Config, ConfigBuilder, Story};
+use fimfic_tracker::{downloader::ProgressListener, Config, ConfigBuilder, Id, Story};
 
 // "The Moon's Apprentice" by Forthwith
-static STORY_ID: &str = "196256";
+static STORY_ID: Id = 196256;
 
 struct SimpleListener {}
 

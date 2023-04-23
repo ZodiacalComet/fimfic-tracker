@@ -2,7 +2,7 @@ use tokio::runtime::Runtime;
 
 use crate::config::Config;
 use crate::errors;
-use crate::story::Story;
+use crate::story::{Id, Story};
 use crate::StoryResponse;
 
 use super::listener::ProgressListener;
@@ -23,7 +23,7 @@ use super::sync::AsyncRequester;
 /// let requester = BlockingRequester::new(config, SilentListener {});
 ///
 /// // Requesting "The Moon's Apprentice" by Forthwith
-/// let story = requester.get_story_response("196256")?;
+/// let story = requester.get_story_response(196256)?;
 /// println!("{:?}", story);
 ///
 /// // Download story according to the configuration file.
@@ -52,12 +52,9 @@ where
     }
 
     /// Executes [`AsyncRequester::get_story_response()`] on a synchronous context.
-    pub fn get_story_response<T>(&self, id_or_url: T) -> errors::Result<StoryResponse>
-    where
-        T: AsRef<str>,
-    {
+    pub fn get_story_response(&self, id: Id) -> errors::Result<StoryResponse> {
         self.rt
-            .block_on(async { self.inner.get_story_response(id_or_url).await })
+            .block_on(async { self.inner.get_story_response(id).await })
     }
 
     /// Executes [`AsyncRequester::client_download()`] on a synchronous context.

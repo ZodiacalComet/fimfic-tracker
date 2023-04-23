@@ -53,9 +53,9 @@ pub struct Track {
         value_name = "ID_OR_URL",
         required = true,
         value_hint(ValueHint::Url),
-        value_parser(NonEmptyStringValueParser::new())
+        value_parser(clap::value_parser!(u32))
     )]
-    pub stories: Vec<String>,
+    pub stories: Vec<u32>,
 }
 
 #[derive(clap::Args, Debug, PartialEq)]
@@ -67,9 +67,9 @@ pub struct Untrack {
         value_name = "ID",
         required = true,
         value_hint(ValueHint::Other),
-        value_parser(NonEmptyStringValueParser::new())
+        value_parser(clap::value_parser!(u32))
     )]
-    pub ids: Vec<String>,
+    pub ids: Vec<u32>,
 }
 
 #[derive(clap::Args, Debug, PartialEq)]
@@ -143,7 +143,7 @@ pub struct Download {
     #[clap(
         value_name = "ID",
         value_hint(ValueHint::Other),
-        value_parser(NonEmptyStringValueParser::new())
+        value_parser(clap::value_parser!(u32))
     )]
-    pub ids: Vec<String>,
+    pub ids: Vec<u32>,
 }
