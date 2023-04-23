@@ -137,12 +137,12 @@ pub struct Track {
 #[clap(visible_alias = "u")]
 /// Untracks stories.
 pub struct Untrack {
-    /// IDs of stories to untrack.
+    /// IDs or URLs of stories to untrack.
     #[clap(
-        value_name = "ID",
+        value_name = "ID_OR_URL",
         required = true,
         value_hint(ValueHint::Other),
-        value_parser(clap::value_parser!(u32))
+        value_parser(StoryValueParser)
     )]
     pub ids: Vec<u32>,
 }
@@ -214,11 +214,11 @@ pub struct Download {
     pub force: bool,
     #[clap(flatten)]
     pub prompt: Prompt,
-    /// IDs of stories to check.
+    /// IDs or URLs of stories to check.
     #[clap(
-        value_name = "ID",
+        value_name = "ID_OR_URL",
         value_hint(ValueHint::Other),
-        value_parser(clap::value_parser!(u32))
+        value_parser(StoryValueParser)
     )]
     pub ids: Vec<u32>,
 }
