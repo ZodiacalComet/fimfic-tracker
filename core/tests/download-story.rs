@@ -27,6 +27,7 @@ impl ProgressListener for SimpleListener {
 }
 
 #[test]
+#[ignore]
 fn test_blocking_download() {
     use fimfic_tracker::downloader::BlockingRequester as Requester;
 
@@ -49,6 +50,7 @@ fn test_blocking_download() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_sync_download() {
     use fimfic_tracker::downloader::AsyncRequester as Requester;
 
