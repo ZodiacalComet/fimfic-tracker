@@ -326,6 +326,22 @@ mod test {
         };
     }
 
+    macro_rules! assert_config_merge {
+        (
+            [$base:ident $(<= $merge:ident)+]
+            $($field:ident == $value:expr;)+
+        ) => {
+            let config: Config = $base.clone()
+                $(.merge($merge.clone()))+
+                .into();
+            let expect: Config = ConfigBuilder::new()
+                $(.$field($value))+
+                .into();
+
+            assert_eq!(config, expect);
+        }
+    }
+
     macro_rules! set_config_vars {
         ($($name:expr => $value:expr),+) => {
             $(
@@ -399,20 +415,15 @@ mod test {
             .sensibility_level(SensibilityLevel::Anything)
             .quiet(true);
 
-        {
-            let config: Config = config.clone().merge(other_config.clone()).into();
-
-            let expect: Config = ConfigBuilder::new()
-                .download_dir("/path/to/download")
-                .tracker_file("/path/to/tracker-cache.json")
-                .download_format(DownloadFormat::EPUB)
-                .download_delay(0)
-                .sensibility_level(SensibilityLevel::Anything)
-                .quiet(true)
-                .into();
-
-            assert_eq!(config, expect);
-        }
+        assert_config_merge!(
+            [config <= other_config]
+            download_dir == "/path/to/download";
+            tracker_file == "/path/to/tracker-cache.json";
+            download_format == DownloadFormat::EPUB;
+            download_delay == 0;
+            sensibility_level == SensibilityLevel::Anything;
+            quiet == true;
+        );
 
         let another_config = ConfigBuilder::new()
             .download_format(DownloadFormat::TXT)
@@ -421,20 +432,15 @@ mod test {
             .exec("/path/to/script $id")
             .quiet(false);
 
-        {
-            let config: Config = config.merge(other_config).merge(another_config).into();
-
-            let expect: Config = ConfigBuilder::new()
-                .download_dir("/path/to/download")
-                .tracker_file("/path/to/tracker-cache.json")
-                .download_format(DownloadFormat::TXT)
-                .download_delay(1)
-                .sensibility_level(SensibilityLevel::IncludeWords)
-                .exec("/path/to/script $id")
-                .quiet(false)
-                .into();
-
-            assert_eq!(config, expect);
-        }
+        assert_config_merge!(
+            [config <= other_config <= another_config]
+            download_dir == "/path/to/download";
+            tracker_file == "/path/to/tracker-cache.json";
+            download_format == DownloadFormat::TXT;
+            download_delay == 1;
+            sensibility_level == SensibilityLevel::IncludeWords;
+            exec == "/path/to/script $id";
+            quiet == false;
+        );
     }
 }
