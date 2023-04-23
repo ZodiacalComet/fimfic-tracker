@@ -13,13 +13,13 @@ pub fn track(
     Track {
         overwrite,
         skip_download,
-        ref stories,
+        ref ids,
     }: Track,
 ) -> Result<()> {
-    let mut to_track: Vec<Id> = Vec::with_capacity(stories.len());
+    let mut to_track: Vec<Id> = Vec::with_capacity(ids.len());
     let mut printed = false;
 
-    for id in stories {
+    for id in ids {
         if let Some(story) = story_data.get(id) {
             if !printed {
                 printed = true;

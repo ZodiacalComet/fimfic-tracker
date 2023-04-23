@@ -1,8 +1,8 @@
 use clap::{
     arg,
-    builder::{Command, NonEmptyStringValueParser},
-    error::{Error, RichFormatter},
-    ArgAction, ArgMatches, FromArgMatches, Parser, Subcommand, ValueHint,
+    builder::{Command, NonEmptyStringValueParser, TypedValueParser},
+    error::{ContextKind, ContextValue, Error, ErrorKind, RichFormatter},
+    Arg, ArgAction, ArgMatches, FromArgMatches, Parser, Subcommand, ValueHint,
 };
 
 #[derive(Parser, Debug, PartialEq)]
@@ -38,6 +38,81 @@ pub enum SubCommand {
     Download(Download),
 }
 
+#[derive(Clone)]
+struct StoryValueParser;
+
+/// Extract story ID from Fimfiction story URL.
+///
+/// Manual implementation of the following regular expression and retrieving the first capture
+/// group: `^https?://(?:www\.)?fimfiction\.net/story/(\d+)`.
+fn id_from_url(url: &str) -> Option<u32> {
+    let (protocol, rest) = url.split_once("://")?;
+    if !(protocol == "http" || protocol == "https") {
+        return None;
+    }
+
+    let (mut domain, rest) = rest.split_once("/")?;
+    if domain.starts_with("www.") {
+        domain = &domain[4..];
+    }
+
+    if domain != "fimfiction.net" {
+        return None;
+    }
+
+    let (path, rest) = rest.split_once("/")?;
+    if path != "story" {
+        return None;
+    }
+
+    let id = if let Some(index) = rest.find("/") {
+        &rest[..index]
+    } else {
+        rest
+    };
+
+    id.parse::<u32>().ok()
+}
+
+impl TypedValueParser for StoryValueParser {
+    type Value = u32;
+
+    fn parse_ref(
+        &self,
+        cmd: &Command,
+        arg: Option<&Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, Error> {
+        if let Ok(id) = clap::value_parser!(u32).parse_ref(cmd, arg, value) {
+            return Ok(id);
+        }
+
+        match NonEmptyStringValueParser::new()
+            .parse_ref(cmd, arg, value)
+            .map(|url| id_from_url(url.as_str()))?
+        {
+            Some(id) => Ok(id),
+            None => {
+                // TODO: Add to the error a "not a Fimfiction story URL nor a story ID".
+                let mut err = Error::new(ErrorKind::ValueValidation).with_cmd(cmd);
+
+                if let Some(arg) = arg {
+                    err.insert(
+                        ContextKind::InvalidArg,
+                        ContextValue::String(arg.to_string()),
+                    );
+                }
+                err.insert(
+                    ContextKind::InvalidValue,
+                    ContextValue::String(value.to_string_lossy().into_owned()),
+                );
+
+                Err(err)
+            }
+        }
+    }
+}
+
 #[derive(clap::Args, Debug, PartialEq)]
 #[clap(visible_alias = "t")]
 /// Adds stories for tracking and downloads them.
@@ -53,9 +128,9 @@ pub struct Track {
         value_name = "ID_OR_URL",
         required = true,
         value_hint(ValueHint::Url),
-        value_parser(clap::value_parser!(u32))
+        value_parser(StoryValueParser)
     )]
-    pub stories: Vec<u32>,
+    pub ids: Vec<u32>,
 }
 
 #[derive(clap::Args, Debug, PartialEq)]
@@ -146,4 +221,34 @@ pub struct Download {
         value_parser(clap::value_parser!(u32))
     )]
     pub ids: Vec<u32>,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    macro_rules! assert_id {
+        ($id:literal / $name:literal, $expect:expr) => {
+            assert_id!([trail] $id, $expect);
+            assert_id!([trail] concat!($id, "/", $name), $expect);
+        };
+        ([trail] $path:expr, $expect:expr) => {
+            assert_id!([prefixes] $path, $expect);
+            assert_id!([prefixes] concat!($path, "/"), $expect);
+        };
+        ([prefixes] $path:expr, $expect:expr) => {
+            assert_id!(concat!("https://www.fimfiction.net/story/", $path), $expect);
+            assert_id!(concat!("http://www.fimfiction.net/story/", $path), $expect);
+            assert_id!(concat!("https://fimfiction.net/story/", $path), $expect);
+            assert_id!(concat!("http://fimfiction.net/story/", $path), $expect);
+        };
+        ($url:expr, $expect:expr) => {
+            assert_eq!(id_from_url($url), Some($expect), "failed to extract ID from `{}`", $url);
+        };
+    }
+
+    #[test]
+    fn extract_story_id_from_url() {
+        assert_id!("196256" / "the-moons-apprentice", 196256);
+    }
 }
