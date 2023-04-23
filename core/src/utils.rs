@@ -198,7 +198,7 @@ impl StoryData {
             )
         })?;
         self.data = stories
-            .drain(0..)
+            .drain(..)
             .map(|s| (s.id.to_string(), s))
             .collect::<IndexMap<String, Story>>();
 

@@ -78,7 +78,7 @@ pub fn track(
     }
 
     separate!();
-    download_stories!(config, requester, stories.drain(0..));
+    download_stories!(config, requester, stories.drain(..));
 
     Ok(())
 }
