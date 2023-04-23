@@ -6,7 +6,7 @@ use fimfic_tracker::{downloader::ProgressListener, Config, ConfigBuilder, Id, St
 // "The Moon's Apprentice" by Forthwith
 static STORY_ID: Id = 196256;
 
-struct SimpleListener {}
+struct SimpleListener;
 
 impl ProgressListener for SimpleListener {
     fn download_progress(&self, bytes: usize, filepath: &str) {
@@ -35,7 +35,7 @@ fn test_blocking_download() {
         .download_dir(tmp_dir.path().to_string_lossy())
         .into();
 
-    let requester = Requester::new(config, SimpleListener {});
+    let requester = Requester::new(config, SimpleListener);
 
     let story: Story = requester
         .get_story_response(STORY_ID)
@@ -57,7 +57,7 @@ async fn test_sync_download() {
         .download_dir(tmp_dir.path().to_string_lossy())
         .into();
 
-    let requester = Requester::new(config, SimpleListener {});
+    let requester = Requester::new(config, SimpleListener);
 
     let story: Story = requester
         .get_story_response(STORY_ID)
