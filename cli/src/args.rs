@@ -250,5 +250,6 @@ mod test {
     #[test]
     fn extract_story_id_from_url() {
         assert_id!("196256" / "the-moons-apprentice", 196256);
+        assert_id!([prefixes] "196256/1/the-moons-apprentice/original-oneshot-prelude-a-dream-fulfilled", 196256);
     }
 }
