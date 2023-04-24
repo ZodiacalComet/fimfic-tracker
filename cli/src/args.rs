@@ -54,7 +54,7 @@ fn id_from_url(url: &str) -> Option<u32> {
         return None;
     }
 
-    let (mut domain, rest) = rest.split_once("/")?;
+    let (mut domain, rest) = rest.split_once('/')?;
     if domain.starts_with("www.") {
         domain = &domain[4..];
     }
@@ -63,12 +63,12 @@ fn id_from_url(url: &str) -> Option<u32> {
         return None;
     }
 
-    let (path, rest) = rest.split_once("/")?;
+    let (path, rest) = rest.split_once('/')?;
     if path != "story" {
         return None;
     }
 
-    let id = if let Some(index) = rest.find("/") {
+    let id = if let Some(index) = rest.find('/') {
         &rest[..index]
     } else {
         rest
