@@ -6,13 +6,13 @@ use std::fs::create_dir_all;
 use clap::Parser;
 
 use fimfic_tracker::{
-    downloader::BlockingRequester, Config, ConfigBuilder, ErrorKind, Result, StoryData,
-    TrackerError,
+    downloader::BlockingRequester, Config, ConfigBuilder, Result, StoryData, TrackerError,
 };
 
 #[macro_use]
 mod macros;
 mod args;
+mod error;
 mod listener;
 mod logger;
 mod readable;
@@ -47,7 +47,7 @@ fn run(args: Args) -> Result<()> {
         debug!("Creating directories to {}", path.display());
         create_dir_all(path).map_err(|err| {
             TrackerError::io(err).context(format!(
-                "Failed to create directories to {}",
+                "failed to create directories to `{}`",
                 path.display()
             ))
         })?;
@@ -87,18 +87,7 @@ fn main() {
     logger::configure(args.verbose, args.color);
 
     if let Err(err) = run(args) {
-        match &err.kind {
-            ErrorKind::UnexpectedResponse { response, .. } => {
-                error!("{}\nResponse content: {}", &err, response)
-            }
-            ErrorKind::BadStoryComparison { .. } => {
-                error!("{}\nThis is an internal error and it should't happen.", err)
-            }
-            ErrorKind::Io(_) | ErrorKind::ConfigParsing { .. } | ErrorKind::Custom(_) => {
-                error!("{}", err)
-            }
-        };
-
+        error::pretty_print(err);
         std::process::exit(1)
     }
 }

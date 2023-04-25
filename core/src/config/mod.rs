@@ -6,7 +6,7 @@ use serde::Deserialize;
 mod format;
 mod sensibility;
 
-use crate::errors::{self, TrackerError};
+use crate::errors::{self, ConfigSource, TrackerError};
 use crate::utils::{
     async_read_to_string, default_user_config_file, default_user_tracker_file, read_to_string,
 };
@@ -171,8 +171,12 @@ impl ConfigBuilder {
     {
         let contents = read_to_string(&filepath)?;
 
-        toml::from_str(&contents)
-            .map_err(|err| TrackerError::config_parsing(filepath.as_ref().display(), err))
+        toml::from_str(&contents).map_err(|error| {
+            TrackerError::config_parsing(ConfigSource::File {
+                path: filepath.as_ref().to_string_lossy().into_owned(),
+                error,
+            })
+        })
     }
 
     /// Asynchronous version of [`ConfigBuilder::from_file()`].
@@ -182,8 +186,12 @@ impl ConfigBuilder {
     {
         let contents = async_read_to_string(&filepath).await?;
 
-        toml::from_str(&contents)
-            .map_err(|err| TrackerError::config_parsing(filepath.as_ref().display(), err))
+        toml::from_str(&contents).map_err(|error| {
+            TrackerError::config_parsing(ConfigSource::File {
+                path: filepath.as_ref().to_string_lossy().into_owned(),
+                error,
+            })
+        })
     }
 
     /// Constructs a [`ConfigBuilder`] from environment variables prefixed with `prefix`.
@@ -196,7 +204,7 @@ impl ConfigBuilder {
 
         envy::prefixed(prefix)
             .from_env()
-            .map_err(|err| TrackerError::config_parsing("the environment", err))
+            .map_err(|err| TrackerError::config_parsing(ConfigSource::Env(err)))
     }
 
     /// Constructs a [`ConfigBuilder`] from the merge of [`default_user_config_file()`] and the

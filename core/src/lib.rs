@@ -45,7 +45,7 @@
 extern crate lazy_static;
 
 mod config;
-mod errors;
+pub mod errors;
 
 #[cfg(feature = "downloader")]
 pub mod downloader;
@@ -55,7 +55,8 @@ mod utils;
 pub use config::{
     Config, ConfigBuilder, DownloadFormat, SensibilityLevel, DEFAULT_ENVIRONMENT_PREFIX,
 };
-pub use errors::{ErrorKind, Result, TrackerError};
+#[doc(inline)]
+pub use errors::{Result, TrackerError};
 #[doc(inline)]
 pub use fimfiction_api::{Story as StoryResponse, StoryStatus};
 #[doc(inline)]

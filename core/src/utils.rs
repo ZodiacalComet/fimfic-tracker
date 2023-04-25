@@ -12,7 +12,7 @@ use shellexpand::env_with_context;
 use url::Url;
 
 use crate::config::{Config, DownloadFormat};
-use crate::errors::{self, ErrorKind, TrackerError};
+use crate::errors::{self, Action, ErrorKind, TrackerError};
 use crate::story::{Id, Story};
 
 #[cfg(any(target_os = "windows", target_os = "macos"))]
@@ -118,7 +118,7 @@ where
     P: AsRef<Path>,
 {
     tokio::fs::read_to_string(&path).await.map_err(|err| {
-        TrackerError::io(err).context(format!("Failed to read file {}", path.as_ref().display()))
+        TrackerError::io(err).context(format!("failed to read file `{}`", path.as_ref().display()))
     })
 }
 
@@ -129,7 +129,7 @@ where
 {
     tokio::fs::write(&path, contents).await.map_err(|err| {
         TrackerError::io(err).context(format!(
-            "Failed to write into file {}",
+            "failed to write into file `{}`",
             path.as_ref().display()
         ))
     })
@@ -140,7 +140,7 @@ where
     P: AsRef<Path>,
 {
     fs::read_to_string(&path).map_err(|err| {
-        TrackerError::io(err).context(format!("Failed to read file {}", path.as_ref().display()))
+        TrackerError::io(err).context(format!("failed to read file `{}`", path.as_ref().display()))
     })
 }
 
@@ -151,7 +151,7 @@ where
 {
     fs::write(&path, contents).map_err(|err| {
         TrackerError::io(err).context(format!(
-            "Failed to write into file {}",
+            "failed to write into file `{}`",
             path.as_ref().display()
         ))
     })
@@ -192,10 +192,7 @@ impl StoryData {
 
     fn load_data_from_string(&mut self, content: String) -> errors::Result<()> {
         let mut stories: Vec<Story> = serde_json::from_str(&content).map_err(|err| {
-            TrackerError::custom(format!("{} in {}", err, &self.path)).context(
-                "The tracker file was read but couldn't be understood, \
-                was it modified by another or did the saving format change?",
-            )
+            TrackerError::tracker_format(self.path.clone(), err, Action::Deserializing)
         })?;
         self.data = stories
             .drain(..)
@@ -207,12 +204,8 @@ impl StoryData {
 
     fn data_to_string(&self) -> errors::Result<String> {
         let stories = self.data.values().collect::<Vec<&Story>>();
-        serde_json::to_string(&stories).map_err(|err| {
-            TrackerError::custom(err).context(
-                "The cached story data couldn't be prepared to be saved, \
-                something went wrong in the application.",
-            )
-        })
+        serde_json::to_string(&stories)
+            .map_err(|err| TrackerError::tracker_format(None, err, Action::Serializing))
     }
 
     /// If the track data file exists maps its contents into the cached data, completely

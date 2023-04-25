@@ -1,4 +1,4 @@
-use std::{fmt::Arguments, io::Write};
+use std::io::Write;
 
 use clap::ColorChoice;
 use console::style;
@@ -6,21 +6,6 @@ use log::{Level, LevelFilter};
 
 pub const PROGRESS_PREFIX: &str = "  ";
 pub const EXCLUDE_IN_VERBOSE_TARGET: &str = "::excluded_in_verbose";
-
-fn indent_args(args: &Arguments<'_>) -> String {
-    args.to_string()
-        .lines()
-        .enumerate()
-        .map(|(index, line)| {
-            if index == 0 {
-                line.into()
-            } else {
-                format!("  {}", line)
-            }
-        })
-        .collect::<Vec<String>>()
-        .join("\n")
-}
 
 pub fn configure(verbose: u8, color_choice: ColorChoice) {
     // By default, `Style` is made to "point" to stdout from `console`'s point of view.
@@ -36,7 +21,7 @@ pub fn configure(verbose: u8, color_choice: ColorChoice) {
 
     if verbose == 0 {
         builder.format(|buf, record| {
-            let args = indent_args(record.args());
+            let args = record.args();
             match record.level() {
                 Level::Error => writeln!(buf, "{}", style(args).red()),
                 Level::Warn => writeln!(buf, "{}", style(format_args!("! {}", args)).yellow()),
@@ -50,7 +35,7 @@ pub fn configure(verbose: u8, color_choice: ColorChoice) {
                 buf.timestamp(),
                 record.level(),
                 record.target(),
-                indent_args(record.args())
+                record.args()
             );
 
             match record.level() {

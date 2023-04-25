@@ -39,7 +39,7 @@ pub fn track(
                     .interact()
                     .map_err(|err| {
                         TrackerError::io(err)
-                            .context("Failed to launch overwrite confirmation prompt")
+                            .context("failed to launch overwrite confirmation prompt")
                     })?;
 
                 if !confirm {

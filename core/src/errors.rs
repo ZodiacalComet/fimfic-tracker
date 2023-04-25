@@ -1,16 +1,49 @@
-use fimfiction_api::StoryError;
+//! Definitions for the [`TrackerError`] type.
 use std::{error::Error, fmt, io};
+
+#[doc(inline)]
+pub use fimfiction_api::StoryError;
+
+use crate::story::Id;
 
 /// An alias of [`Result`] for all of its instances across the crate.
 pub type Result<T> = std::result::Result<T, TrackerError>;
+
+/// Representation of a configuration error by their source.
+#[derive(Debug)]
+pub enum ConfigSource {
+    /// Error caused by a file.
+    File {
+        /// The configuration file that caused the error.
+        path: String,
+        /// The error being thrown.
+        error: toml::de::Error,
+    },
+    /// Error caused by the environment.
+    Env(envy::Error),
+}
+
+/// Meant for determining the action that the [`TrackerFormat`](ErrorKind::TrackerFormat) was in
+/// the middle of without requiring any additional context.
+#[derive(Debug)]
+pub enum Action {
+    /// Indicates that a serialization of the tracker data was being done.
+    Serializing,
+    /// Indicates that a deserialization of the tracker data was being done.
+    Deserializing,
+}
 
 /// The different kinds of errors that [`TrackerError`] can be.
 #[derive(Debug)]
 pub enum ErrorKind {
     /// An error in a I/O operation.
     Io(io::Error),
+    /// A request error.
+    Request(reqwest::Error),
     /// An error while parsing a Fimfiction response.
     UnexpectedResponse {
+        /// The story ID that caused the error.
+        id: Id,
         /// The raw response that caused the error.
         response: String,
         /// The error being thrown.
@@ -25,11 +58,15 @@ pub enum ErrorKind {
         other_id: u32,
     },
     /// An error while parsing a configuration source.
-    ConfigParsing {
-        /// The source that caused the error.
-        origin: Option<String>,
+    ConfigParsing(ConfigSource),
+    /// An error while (de)serializing [`StoryData`](crate::StoryData).
+    TrackerFormat {
+        /// Path to the tracker file that caused the error, if relevant.
+        path: Option<String>,
+        /// The action that was being done when the error happened.
+        action: Action,
         /// The error being thrown.
-        cause: Box<dyn Error + Send + Sync>,
+        error: serde_json::Error,
     },
     /// A custom error.
     Custom(String),
@@ -57,7 +94,7 @@ impl TrackerError {
     where
         C: Into<String>,
     {
-        self.context = Some(context.into());
+        let _ = self.context.insert(context.into());
         self
     }
 
@@ -66,10 +103,16 @@ impl TrackerError {
         TrackerError::with(ErrorKind::Io(err))
     }
 
+    /// Constructs a [`TrackerError`] of kind [`Request`](ErrorKind::Request).
+    pub fn request(err: reqwest::Error) -> Self {
+        TrackerError::with(ErrorKind::Request(err))
+    }
+
     /// Constructs a [`TrackerError`] of kind
     /// [`UnexpectedResponse`](ErrorKind::UnexpectedResponse).
-    pub fn unexpected_response(err: StoryError, response: String) -> Self {
+    pub fn unexpected_response(err: StoryError, id: Id, response: String) -> Self {
         TrackerError::with(ErrorKind::UnexpectedResponse {
+            id,
             response,
             error: err,
         })
@@ -83,14 +126,19 @@ impl TrackerError {
 
     /// Constructs a [`TrackerError`] of kind
     /// [`ConfigParsing`](ErrorKind::ConfigParsing).
-    pub fn config_parsing<O, E>(origin: O, cause: E) -> Self
+    pub fn config_parsing(source: ConfigSource) -> Self {
+        TrackerError::with(ErrorKind::ConfigParsing(source))
+    }
+
+    /// Constructs a [`TrackerError`] of kind [`TrackerFormat`](ErrorKind::TrackerFormat).
+    pub fn tracker_format<T>(path: T, error: serde_json::Error, action: Action) -> Self
     where
-        O: ToString,
-        E: Into<Box<dyn Error + Send + Sync>>,
+        T: Into<Option<String>>,
     {
-        TrackerError::with(ErrorKind::ConfigParsing {
-            origin: Some(origin.to_string()),
-            cause: cause.into(),
+        TrackerError::with(ErrorKind::TrackerFormat {
+            path: path.into(),
+            action,
+            error,
         })
     }
 
@@ -110,11 +158,14 @@ impl fmt::Display for TrackerError {
         }
 
         match &self.kind {
-            ErrorKind::UnexpectedResponse { ref error, .. } => {
-                write!(f, "error parsing response: {}", err)?;
+            ErrorKind::UnexpectedResponse { id, ref error, .. } => {
+                write!(f, "error parsing response for ID `{}`: {}", id, error)?;
             }
             ErrorKind::Io(ref err) => {
                 write!(f, "IO error: {}", err)?;
+            }
+            ErrorKind::Request(ref err) => {
+                write!(f, "{}", err)?;
             }
             ErrorKind::BadStoryComparison { id, other_id } => {
                 write!(
@@ -123,17 +174,36 @@ impl fmt::Display for TrackerError {
                     id, other_id
                 )?;
             }
-            ErrorKind::ConfigParsing {
-                ref origin,
-                ref cause,
-            } => {
-                write!(f, "error parsing configuration")?;
+            ErrorKind::ConfigParsing(source) => {
+                write!(f, "error parsing configuration ")?;
 
-                if let Some(origin) = origin {
-                    write!(f, " in `{}`", origin)?;
+                match source {
+                    ConfigSource::File { path, error } => {
+                        write!(f, "in `{}`: {}", path, error.message())?;
+                    }
+                    ConfigSource::Env(error) => {
+                        write!(f, "in `the environment`: {}", error)?;
+                    }
+                }
+            }
+            ErrorKind::TrackerFormat {
+                ref path,
+                ref action,
+                ref error,
+            } => {
+                write!(f, "error in tracker format")?;
+
+                if let Some(path) = path {
+                    write!(f, " from `{}`", path)?;
                 }
 
-                write!(": {}", cause)?;
+                write!(f, " while ")?;
+                match action {
+                    Action::Deserializing => write!(f, "deserializing")?,
+                    Action::Serializing => write!(f, "serializing")?,
+                };
+
+                write!(f, ": {}", error)?;
             }
             ErrorKind::Custom(err) => {
                 write!(f, "{}", err)?;
@@ -148,10 +218,14 @@ impl Error for TrackerError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self.kind {
             ErrorKind::Io(ref err) => Some(err),
+            ErrorKind::Request(ref err) => Some(err),
             ErrorKind::UnexpectedResponse { ref error, .. } => Some(error),
-            // ErrorKind::ConfigParsing { ref cause, .. } => Some(&cause),
-            // ErrorKind::Custom(ref message) => Some(&message),
-            _ => None,
+            ErrorKind::ConfigParsing(ref source) => Some(match source {
+                ConfigSource::File { ref error, .. } => error,
+                ConfigSource::Env(ref err) => err,
+            }),
+            ErrorKind::TrackerFormat { ref error, .. } => Some(error),
+            ErrorKind::BadStoryComparison { .. } | ErrorKind::Custom(_) => None,
         }
     }
 }

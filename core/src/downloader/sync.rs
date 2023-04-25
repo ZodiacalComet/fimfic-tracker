@@ -31,7 +31,7 @@ where
     let mut stream = res.bytes_stream();
 
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(TrackerError::custom)?;
+        let chunk = chunk.map_err(TrackerError::request)?;
 
         total_bytes += chunk.len();
         progress.download_progress(total_bytes, &filepath);
@@ -103,15 +103,16 @@ where
             .get(url)
             .send()
             .await
-            .map_err(TrackerError::custom)?
+            .map_err(TrackerError::request)?
             .text()
             .await
             .map_err(|err| {
-                TrackerError::custom(err)
-                    .context("Couldn't decode the Fimfiction API response body")
+                TrackerError::request(err)
+                    .context("couldn't decode the Fimfiction API response body")
             })?;
 
-        fimfiction_api::from_str(&json).map_err(|err| TrackerError::unexpected_response(err, json))
+        fimfiction_api::from_str(&json)
+            .map_err(|err| TrackerError::unexpected_response(err, id, json))
     }
 
     /// Downloads `story` from Fimfiction into the download directory in the
@@ -134,7 +135,7 @@ where
         let res = req
             .send()
             .await
-            .map_err(|err| TrackerError::custom(err).context("Failed to prepare download page"))?;
+            .map_err(|err| TrackerError::request(err).context("failed to start story download"))?;
 
         let dest = fs::OpenOptions::new()
             .create(true)
@@ -144,14 +145,14 @@ where
             .await
             .map_err(|err| {
                 TrackerError::io(err)
-                    .context(format!("Failed to create file {}", filepath.display()))
+                    .context(format!("failed to create file `{}`", filepath.display()))
             })?;
 
         download(res, dest, filepath.display(), &self.progress)
             .await
             .map_err(|err| {
-                TrackerError::custom(err).context(format!(
-                    "Failed to download story to {}",
+                err.context(format!(
+                    "failed to download story to `{}`",
                     filepath.display()
                 ))
             })?;
@@ -179,7 +180,7 @@ where
             Some(args) => args,
             None => {
                 return Err(TrackerError::custom(
-                    "Exec command should mimic a POSIX shell command",
+                    "exec command should mimic a POSIX shell command",
                 ))
             }
         };
@@ -196,19 +197,19 @@ where
         self.progress.before_execute_command(story);
 
         let status = command.status().await.map_err(|err| {
-            TrackerError::io(err).context(format!("Failed to execute command: {:?}", &exec))
+            TrackerError::io(err).context(format!("failed to execute command: {:?}", &exec))
         })?;
 
         if !status.success() {
             let err = match status.code() {
                 Some(code) => TrackerError::custom(format!(
-                    "Command process exited with status code {}",
+                    "command process exited with status code {}",
                     code
                 )),
-                None => TrackerError::custom("Command process was terminated by signal"),
+                None => TrackerError::custom("command process was terminated by signal"),
             };
 
-            return Err(err.context(format!("Failed executing command: {}", &exec)));
+            return Err(err.context(format!("failed executing command: {:?}", &exec)));
         }
 
         self.progress.successfull_command_execution(story);
