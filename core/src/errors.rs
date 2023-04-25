@@ -39,6 +39,7 @@ pub enum ErrorKind {
     /// An error in a I/O operation.
     Io(io::Error),
     /// A request error.
+    #[cfg(feature = "downloader")]
     Request(reqwest::Error),
     /// An error while parsing a Fimfiction response.
     UnexpectedResponse {
@@ -104,6 +105,7 @@ impl TrackerError {
     }
 
     /// Constructs a [`TrackerError`] of kind [`Request`](ErrorKind::Request).
+    #[cfg(feature = "downloader")]
     pub fn request(err: reqwest::Error) -> Self {
         TrackerError::with(ErrorKind::Request(err))
     }
@@ -164,6 +166,7 @@ impl fmt::Display for TrackerError {
             ErrorKind::Io(ref err) => {
                 write!(f, "IO error: {}", err)?;
             }
+            #[cfg(feature = "downloader")]
             ErrorKind::Request(ref err) => {
                 write!(f, "{}", err)?;
             }
