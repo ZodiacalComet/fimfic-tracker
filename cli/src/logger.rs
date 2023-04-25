@@ -30,20 +30,26 @@ pub fn configure(verbose: u8, color_choice: ColorChoice) {
         });
     } else {
         builder.format(|buf, record| {
-            let log_entry = format!(
-                "[{}] [{}] [{}] {}",
-                buf.timestamp(),
-                record.level(),
-                record.target(),
-                record.args()
-            );
+            let message = record.args().to_string();
 
-            match record.level() {
-                Level::Error => writeln!(buf, "{}", style(log_entry).red()),
-                Level::Warn => writeln!(buf, "{}", style(log_entry).yellow()),
-                Level::Info => writeln!(buf, "{}", log_entry),
-                _ => writeln!(buf, "{}", style(log_entry).dim()),
+            for line in message.lines() {
+                let log_entry = format!(
+                    "[{}] [{}] [{}] {}",
+                    buf.timestamp(),
+                    record.level(),
+                    record.target(),
+                    line
+                );
+
+                match record.level() {
+                    Level::Error => writeln!(buf, "{}", style(log_entry).red())?,
+                    Level::Warn => writeln!(buf, "{}", style(log_entry).yellow())?,
+                    Level::Info => writeln!(buf, "{}", log_entry)?,
+                    _ => writeln!(buf, "{}", style(log_entry).dim())?,
+                }
             }
+
+            Ok(())
         });
     }
 
