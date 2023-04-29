@@ -12,6 +12,9 @@ use crate::readable::ReadableDate;
 use crate::Requester;
 
 macro_rules! format_update {
+    (author, $before:expr => $after:expr) => {
+        format_update!([green] &$before, &$after)
+    };
     (chapters, $before:expr => $after:expr) => {
         format_update!([blue] $before, $after)
     };
@@ -157,19 +160,43 @@ pub fn download(
         info_story_checking!(story);
         let updated_story: Story = requester.get_story_response(id)?.into();
 
+        let title_changed = story.title != updated_story.title;
+        let author_changed = story.author != updated_story.author;
         let status_changed = story.status != updated_story.status;
         let story_update = story.compare_to(&updated_story)?;
-        if story_update.is_some() || status_changed {
+
+        if story_update.is_some() || title_changed || author_changed || status_changed {
+            // If we are here, something will be printed to stderr. Be it by the specific cases
+            // just below or by the resulting StoryUpdate comparison.
             set_printed!();
 
-            if status_changed {
+            if title_changed || author_changed || status_changed {
                 clear_last_lines!();
 
-                info!(
-                    "{} has changed its status ({})",
-                    format_story!(story),
-                    format_update!(status, story.status => updated_story.status),
-                );
+                if title_changed {
+                    info!(
+                        "{} has changed its title to {}",
+                        format_story!(story),
+                        style(&updated_story.title).green().bold()
+                    );
+                }
+
+                if author_changed {
+                    info!(
+                        "{} has changed its author ({})",
+                        format_story!(story),
+                        format_update!(author, story.author => updated_story.author)
+                    );
+                }
+
+                if status_changed {
+                    info!(
+                        "{} has changed its status ({})",
+                        format_story!(story),
+                        format_update!(status, story.status => updated_story.status),
+                    );
+                }
+
                 info_story_checking!(story);
             }
 
