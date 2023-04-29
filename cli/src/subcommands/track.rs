@@ -25,17 +25,13 @@ pub fn track(
                 printed = true;
             }
 
+            let story_notice = format!("{} is already on the tracking list", format_story!(story));
+
             if overwrite {
-                info!(
-                    "{} is already on the tracking list. Overwriting.",
-                    format_story!(story)
-                );
+                info!("{}. Overwriting.", story_notice);
             } else {
                 let confirm = Confirm::new()
-                    .with_prompt(format!(
-                        "{} is already on the tracking list. Do you want to overwrite it?",
-                        format_story!(story)
-                    ))
+                    .with_prompt(format!("{}. Do you want to overwrite it?", story_notice))
                     .interact()
                     .map_err(|err| {
                         TrackerError::io(err)
