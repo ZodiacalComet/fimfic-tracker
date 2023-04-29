@@ -78,7 +78,21 @@ pub fn track(
     }
 
     separate!();
-    download_stories!(config, requester, stories.drain(..));
+
+    // By this point, all stories given for tracking are already inserted into the tracking list.
+    // This would make it so that if an error were to happen here, they would still be saved.
+    // That seems like a pretty good behavior.
+    let use_separator = config.exec.is_some() && !config.quiet;
+    let delay = std::time::Duration::from_secs(config.download_delay);
+
+    for (is_first, story) in stories
+        .drain(..)
+        .enumerate()
+        .map(|(index, story)| (index == 0, story))
+    {
+        download_delay!(!is_first, use_separator, delay);
+        requester.download(&story)?;
+    }
 
     Ok(())
 }

@@ -78,22 +78,13 @@ macro_rules! format_status {
 }
 
 #[macro_export]
-macro_rules! download_stories {
-    ($config:expr, $requester:expr, $iter:expr) => {
-        let sep_on_wait = match $config.exec.as_ref() {
-            Some(_) if !$config.quiet => true,
-            _ => false,
-        };
-
-        for (wait, story) in $iter.enumerate().map(|(idx, value)| (idx != 0, value)) {
-            if wait {
-                std::thread::sleep(std::time::Duration::from_secs($config.download_delay));
-                if sep_on_wait {
-                    separate!();
-                }
+macro_rules! download_delay {
+    ($wait:expr, $use_separator:expr, $delay:expr) => {
+        if $wait {
+            std::thread::sleep($delay);
+            if $use_separator {
+                separate!();
             }
-
-            $requester.download(&story)?;
         }
     };
 }

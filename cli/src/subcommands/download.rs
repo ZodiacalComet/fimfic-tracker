@@ -58,6 +58,12 @@ macro_rules! info_update {
     };
 }
 
+#[derive(Debug)]
+enum StoryDownload {
+    Update(Id, Story),
+    Forced(Id),
+}
+
 pub fn download(
     config: &Config,
     requester: &Requester,
@@ -200,12 +206,22 @@ pub fn download(
         ids_to_download.insert(id);
     }
 
-    if force {
-        for id in story_data
+    // Update stories with ignored updates.
+    // This way if the downloads fail, these should be saved by the "emergency save".
+    //
+    // After this block, `updated_stories` should only contain stories whose IDs are in
+    // `ids_to_download`.
+    {
+        let mut updated_ids = story_data
             .keys()
-            .filter(|id| selected_ids.contains(id) && !ignored_ids.contains(id))
-        {
-            ids_to_download.insert(*id);
+            .filter(|id| !ids_to_download.contains(id))
+            .filter_map(|id| updated_stories.remove_entry(id))
+            .collect::<Vec<(Id, Story)>>();
+
+        debug!("Ignored updates: {:?}", &updated_ids);
+
+        for (id, story) in updated_ids.drain(..) {
+            story_data.insert(id, story);
         }
     }
 
@@ -213,7 +229,7 @@ pub fn download(
         separate!();
     }
 
-    if ids_to_download.is_empty() {
+    if !force && ids_to_download.is_empty() {
         info!("There is nothing to download");
     } else if force {
         progress_or_info!(
@@ -232,17 +248,49 @@ pub fn download(
         separate!();
     }
 
-    download_stories!(
-        config,
-        requester,
-        story_data
-            .iter()
-            .filter(|(id, _)| ids_to_download.contains(id))
-            .map(|(_, story)| story)
-    );
+    let use_separator = config.exec.is_some() && !config.quiet;
+    let delay = std::time::Duration::from_secs(config.download_delay);
 
-    for (id, story) in updated_stories.drain() {
-        story_data.insert(id, story);
+    let mut stories_to_download: Vec<StoryDownload> = story_data
+        .keys()
+        // Only download the stories that:
+        // (1) Whose IDs were given by the user if any.
+        // (2) The user responded to its prompt with Y.
+        .filter(|id| selected_ids.contains(id) && !ignored_ids.contains(id))
+        // Download all stories if the user forced it, otherwise only those who passed the update
+        // sensibility test.
+        .filter(|id| force || ids_to_download.contains(id))
+        .map(|id| match updated_stories.remove(id) {
+            Some(story) => StoryDownload::Update(*id, story),
+            None => StoryDownload::Forced(*id),
+        })
+        .collect();
+
+    debug!("Stories to download: {:?}", &stories_to_download);
+
+    for (is_first, story_download) in stories_to_download
+        .drain(..)
+        .enumerate()
+        .map(|(index, story_download)| (index == 0, story_download))
+    {
+        download_delay!(!is_first, use_separator, delay);
+
+        match &story_download {
+            StoryDownload::Update(_, story) => requester.download(story)?,
+            // While this should be safe to unwrap, in the unlikely event that it panics the
+            // "emergency save" would be skipped.
+            // So I throw in a `match` to "safely" unwrap it and throw a warning if it is not
+            // present.
+            StoryDownload::Forced(id) => match story_data.get(id) {
+                Some(story) => requester.download(story)?,
+                None => warn!("{} is not present in the tracker file.", id),
+            },
+        };
+
+        // Insert the update once it downloads.
+        if let StoryDownload::Update(id, story) = story_download {
+            story_data.insert(id, story);
+        }
     }
 
     Ok(())
