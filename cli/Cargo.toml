@@ -6,16 +6,10 @@ description = "An unnecessary CLI application for tracking Fimfiction stories."
 license = "Unlicense"
 edition = "2021"
 
-build = "build.rs"
-
 [[bin]]
 name = "fimfic-tracker"
 path = "src/main.rs"
 doc = false
-
-[build-dependencies]
-clap = { version = "4", features = ["derive"] }
-clap_complete = "4"
 
 [dependencies.fimfic-tracker]
 path = "../core"

@@ -1,0 +1,195 @@
+#compdef fimfic-tracker
+
+autoload -U is-at-least
+
+_fimfic-tracker() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-c+[Extra config file to use]:FILE:_files' \
+'--config=[Extra config file to use]:FILE:_files' \
+'--color=[When to use colors]:COLOR:((auto\:"Use colored output if writing to a terminal/TTY"
+always\:"Always use colored output"
+never\:"Never use colored output"))' \
+'*-v[Shows verbose output, can be used multiple times to set level of verbosity]' \
+'*--verbose[Shows verbose output, can be used multiple times to set level of verbosity]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_fimfic-tracker_commands" \
+"*::: :->fimfic-tracker" \
+&& ret=0
+    case $state in
+    (fimfic-tracker)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:fimfic-tracker-command-$line[1]:"
+        case $line[1] in
+            (track)
+_arguments "${_arguments_options[@]}" \
+'-o[Overwrites already present stories on cached data]' \
+'--overwrite[Overwrites already present stories on cached data]' \
+'-s[Don'\''t download stories, only updates cached data]' \
+'--skip-download[Don'\''t download stories, only updates cached data]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::ids -- IDs or URLs of stories to track:_urls' \
+&& ret=0
+;;
+(untrack)
+_arguments "${_arguments_options[@]}" \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::ids -- IDs or URLs of stories to untrack:( )' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+'-s[Show only the ID and title of each tracked story]' \
+'--short[Show only the ID and title of each tracked story]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(download)
+_arguments "${_arguments_options[@]}" \
+'-f[Download no matter the presence of updates]' \
+'--force[Download no matter the presence of updates]' \
+'(-n --no)-y[Automatically answers prompts with Y]' \
+'(-n --no)--yes[Automatically answers prompts with Y]' \
+'-n[Automatically answers prompts with N]' \
+'--no[Automatically answers prompts with N]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::ids -- IDs or URLs of stories to check:( )' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+":: :_fimfic-tracker__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:fimfic-tracker-help-command-$line[1]:"
+        case $line[1] in
+            (track)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(untrack)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(download)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_fimfic-tracker_commands] )) ||
+_fimfic-tracker_commands() {
+    local commands; commands=(
+'track:Adds stories for tracking and downloads them' \
+'t:Adds stories for tracking and downloads them' \
+'untrack:Untracks stories' \
+'u:Untracks stories' \
+'list:List all stories that are being tracked' \
+'l:List all stories that are being tracked' \
+'ls:List all stories that are being tracked' \
+'download:Checks for updates on tracking list and downloads them if so' \
+'d:Checks for updates on tracking list and downloads them if so' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'fimfic-tracker commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__download_commands] )) ||
+_fimfic-tracker__download_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker download commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__help__download_commands] )) ||
+_fimfic-tracker__help__download_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker help download commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__help_commands] )) ||
+_fimfic-tracker__help_commands() {
+    local commands; commands=(
+'track:Adds stories for tracking and downloads them' \
+'untrack:Untracks stories' \
+'list:List all stories that are being tracked' \
+'download:Checks for updates on tracking list and downloads them if so' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'fimfic-tracker help commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__help__help_commands] )) ||
+_fimfic-tracker__help__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker help help commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__help__list_commands] )) ||
+_fimfic-tracker__help__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker help list commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__list_commands] )) ||
+_fimfic-tracker__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker list commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__help__track_commands] )) ||
+_fimfic-tracker__help__track_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker help track commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__track_commands] )) ||
+_fimfic-tracker__track_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker track commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__help__untrack_commands] )) ||
+_fimfic-tracker__help__untrack_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker help untrack commands' commands "$@"
+}
+(( $+functions[_fimfic-tracker__untrack_commands] )) ||
+_fimfic-tracker__untrack_commands() {
+    local commands; commands=()
+    _describe -t commands 'fimfic-tracker untrack commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_fimfic-tracker" ]; then
+    _fimfic-tracker "$@"
+else
+    compdef _fimfic-tracker fimfic-tracker
+fi
