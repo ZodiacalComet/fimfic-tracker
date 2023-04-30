@@ -197,7 +197,10 @@ pub fn download(
                     );
                 }
 
-                info_story_checking!(story);
+                // Avoid this message from being repeated twice in verbose output.
+                if verbose_disabled!() {
+                    info_story_checking!(story);
+                }
             }
 
             updated_stories.insert(id, updated_story);
