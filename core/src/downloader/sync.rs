@@ -299,5 +299,16 @@ mod test {
                 "https://www.fimfiction.net/story/0",
             ]
         );
+
+        assert_args!(
+            "notify-send -u normal 'A story has updated' '<span weight=\"bold\">$TITLE</span> got an update'",
+            &[
+                "notify-send",
+                "-u",
+                "normal",
+                "A story has updated",
+                "<span weight=\"bold\">A _Story_ Title</span> got an update",
+            ]
+        );
     }
 }

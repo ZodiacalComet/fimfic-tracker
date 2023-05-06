@@ -1892,6 +1892,7 @@ dependencies = [
  "clap",
  "clap_complete",
  "eyre",
+ "shlex",
 ]
 
 [[package]]

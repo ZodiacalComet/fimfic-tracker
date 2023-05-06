@@ -7,3 +7,4 @@ edition = "2021"
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4"
 eyre = "0.6.8"
+shlex = "1.1.0"
