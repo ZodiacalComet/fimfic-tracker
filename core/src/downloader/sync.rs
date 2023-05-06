@@ -44,6 +44,16 @@ where
     Ok(())
 }
 
+fn split_str_to_args(command: &str, story: &Story, config: &Config) -> errors::Result<Vec<String>> {
+    shlex::split(command)
+        .ok_or_else(|| TrackerError::custom("failed to split command into arguments"))
+        .map(|args| {
+            args.iter()
+                .map(|arg| env_with_command_context(arg, story, config).into_owned())
+                .collect::<Vec<String>>()
+        })
+}
+
 /// An asynchronous story downloader.
 ///
 /// Makes use of an asynchronous [`Client`](reqwest::Client) for all of its requests.
@@ -175,15 +185,8 @@ where
     where
         S: AsRef<str>,
     {
-        let exec = env_with_command_context(command.as_ref(), story, &self.config);
-        let args = match shlex::split(&exec) {
-            Some(args) => args,
-            None => {
-                return Err(TrackerError::custom(
-                    "exec command should mimic a POSIX shell command",
-                ))
-            }
-        };
+        let args = split_str_to_args(command.as_ref(), story, &self.config)
+            .map_err(|err| err.context("exec command should mimic a POSIX shell command"))?;
 
         let mut command = Command::new(&args[0]);
         if args.len() > 1 {
@@ -197,7 +200,7 @@ where
         self.progress.before_execute_command(story);
 
         let status = command.status().await.map_err(|err| {
-            TrackerError::io(err).context(format!("failed to execute command: {:?}", &exec))
+            TrackerError::io(err).context(format!("failed to execute command: {:?}", &args))
         })?;
 
         if !status.success() {
@@ -209,7 +212,7 @@ where
                 None => TrackerError::custom("command process was terminated by signal"),
             };
 
-            return Err(err.context(format!("failed executing command: {:?}", &exec)));
+            return Err(err.context(format!("failed executing command: {:?}", &args)));
         }
 
         self.progress.successfull_command_execution(story);
@@ -226,5 +229,75 @@ where
             Some(exec) => self.exec_download(exec, story).await,
             None => self.client_download(story).await,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use chrono::{TimeZone, Utc};
+
+    use crate::config::ConfigBuilder;
+    use crate::StoryStatus;
+
+    #[test]
+    fn argument_split() {
+        let story = Story {
+            id: 0,
+            title: "A \"Story\" Title".into(),
+            author: "An \"Author\"".into(),
+            chapter_count: 10,
+            words: 77_446,
+            update_datetime: Utc
+                .with_ymd_and_hms(2018, 3, 18, 13, 42, 7)
+                .single()
+                .expect("DateTime should be valid and with a single result"),
+            status: StoryStatus::Hiatus,
+        };
+
+        let config: Config = ConfigBuilder::new()
+            .download_dir("/path/to/download-dir")
+            .tracker_file("/path/to/tracker-file.json")
+            .into();
+
+        macro_rules! assert_args {
+            ($command:literal, $expect:expr) => {
+                assert_eq!(
+                    split_str_to_args($command, &story, &config)
+                        .expect("command should be properly defined"),
+                    $expect
+                );
+            };
+        }
+
+        assert_args!(
+            "wget -O $DOWNLOAD_DIR/$TITLE.$FORMAT $DOWNLOAD_URL",
+            &[
+                "wget",
+                "-O",
+                "/path/to/download-dir/A _Story_ Title.html",
+                "https://www.fimfiction.net/story/download/0/html",
+            ]
+        );
+
+        assert_args!(
+            "fimfic2epub --dir $DOWNLOAD_DIR $ID",
+            &["fimfic2epub", "--dir", "/path/to/download-dir", "0"]
+        );
+
+        assert_args!(
+            "fanficfare --format=$FORMAT --non-interactive \
+            --option output_filename=\"$DOWNLOAD_DIR/$${title}-$${siteabbrev}_$${storyId}$${formatext}\" \
+            $URL",
+            &[
+                "fanficfare", 
+                "--format=html", 
+                "--non-interactive", 
+                "--option",
+                "output_filename=/path/to/download-dir/${title}-${siteabbrev}_${storyId}${formatext}",
+                "https://www.fimfiction.net/story/0",
+            ]
+        );
     }
 }

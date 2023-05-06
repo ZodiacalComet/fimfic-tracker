@@ -53,7 +53,7 @@ sensibility_level = 0
 #
 # While it may act like one it is NOT a shell nor is it run in one. It WON'T
 # expand tilde (~) into the home directory and it will ONLY expand the variables
-# listed below.
+# listed below AFTER the command is split into arguments.
 #
 # The format for said variables is the same as the one used inside a unix shell,
 # meaning that $VAR and ${VAR} should work as expected (${VAR-:DEFAULT} does indeed work,
@@ -79,15 +79,15 @@ sensibility_level = 0
 exec = ''
 
 # Alternative download method.
-# exec = 'wget -O "$DOWNLOAD_DIR/$TITLE.$FORMAT" "$DOWNLOAD_URL"'
+# exec = "wget -O $DOWNLOAD_DIR/$TITLE.$FORMAT $DOWNLOAD_URL"
 #
 # fimfic2epub
-# exec = 'fimfic2epub --dir "$DOWNLOAD_DIR" $ID'
+# exec = "fimfic2epub --dir $DOWNLOAD_DIR $ID"
 #
 # FanFicFare
 # If you would like progress indication you can add the "--progressbar" flag.
 # For a more verbose output add the "--debug" flag.
-# exec = 'fanficfare --format=$FORMAT --non-interactive --option output_filename="$DOWNLOAD_DIR/$${title}-$${siteabbrev}_$${storyId}$${formatext}" "$URL"'
+# exec = 'fanficfare --format=$FORMAT --non-interactive --option output_filename="$DOWNLOAD_DIR/$${title}-$${siteabbrev}_$${storyId}$${formatext}" $URL'
 #
 # If you REALLY need shell features you can use the shell command "/usr/bin/sh".
 # Keeping in mind that variables will be tried to be expanded by the ones listed above FIRST
