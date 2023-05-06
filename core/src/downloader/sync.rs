@@ -175,7 +175,7 @@ where
     where
         S: AsRef<str>,
     {
-        let exec = env_with_command_context(command, story, &self.config)?;
+        let exec = env_with_command_context(command.as_ref(), story, &self.config);
         let args = match shlex::split(&exec) {
             Some(args) => args,
             None => {

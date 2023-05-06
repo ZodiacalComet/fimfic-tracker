@@ -1,5 +1,6 @@
 //! Collection of utility functions, structs and traits.
 use std::{
+    borrow::Cow,
     fs, io,
     ops::{Deref, DerefMut},
     path::{Path, PathBuf},
@@ -7,7 +8,7 @@ use std::{
 
 use directories::ProjectDirs;
 use indexmap::IndexMap;
-use shellexpand::env_with_context;
+use shellexpand::env_with_context_no_errors;
 
 use url::Url;
 
@@ -67,16 +68,13 @@ pub fn download_url_format(story: &Story, format: DownloadFormat) -> Url {
 /// - `FORMAT`: The value of `config.download_format`.
 ///
 /// Unexpected variables are left as is.
-pub fn env_with_command_context<S>(
-    command: S,
+pub fn env_with_command_context<'a>(
+    command: &'a str,
     story: &Story,
     config: &Config,
-) -> errors::Result<String>
-where
-    S: AsRef<str>,
-{
-    env_with_context(&command, |var| -> Result<Option<String>, &'static str> {
-        let expanded = match var {
+) -> Cow<'a, str> {
+    env_with_context_no_errors(command, |var| -> Option<String> {
+        match var {
             "ID" => Some(story.id.to_string()),
             "TITLE" => Some(sanitize_filename(story.title.clone())),
             "AUTHOR" => Some(sanitize_filename(story.author.clone())),
@@ -88,12 +86,8 @@ where
             "DOWNLOAD_DIR" => Some(config.download_dir.display().to_string()),
             "FORMAT" => Some(config.download_format.to_string()),
             _ => None,
-        };
-
-        Ok(expanded)
+        }
     })
-    .map(|c| c.into_owned())
-    .map_err(TrackerError::custom)
 }
 
 /// Replaces forbidden characters present in `filename` with `_`.
