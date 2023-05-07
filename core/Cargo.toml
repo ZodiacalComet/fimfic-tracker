@@ -18,7 +18,7 @@ toml = { version = "0.7", default-features = false, features = ["parse"] }
 envy = "0.4"
 directories = "5"
 lazy_static = "1.4"
-shellexpand = "2.1.0"
+shellexpand = "3.0.0"
 url = "2.2"
 indexmap = "1.5"
 tokio = { version = "1", features = ["fs"] }
