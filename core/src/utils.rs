@@ -51,8 +51,8 @@ pub fn download_url_format(story: &Story, format: DownloadFormat) -> Url {
         .expect("Fimficiton download URL parse failed")
 }
 
-/// Performs a shell-like environment expansion with [`shellexpand::env_with_context()`] using a
-/// custom context.
+/// Performs a shell-like environment expansion with [`shellexpand::env_with_context_no_errors()`]
+/// using a custom context.
 ///
 /// Said context has the defined variables:
 /// - `ID`: The value of `story.id`.
