@@ -67,7 +67,7 @@ fn split_str_to_args(command: &str, story: &Story, config: &Config) -> errors::R
 /// use fimfic_tracker::downloader::{AsyncRequester, SilentListener};
 /// # let config = Config::default();
 ///
-/// let requester = AsyncRequester::new(config, SilentListener {});
+/// let requester = AsyncRequester::new(config, SilentListener);
 ///
 /// // Requesting "The Moon's Apprentice" by Forthwith
 /// let story = requester.get_story_response(196256).await?;

@@ -20,7 +20,7 @@ use super::sync::AsyncRequester;
 /// use fimfic_tracker::downloader::{BlockingRequester, SilentListener};
 /// # let config = Config::default();
 ///
-/// let requester = BlockingRequester::new(config, SilentListener {});
+/// let requester = BlockingRequester::new(config, SilentListener);
 ///
 /// // Requesting "The Moon's Apprentice" by Forthwith
 /// let story = requester.get_story_response(196256)?;
