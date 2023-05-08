@@ -2,7 +2,8 @@ use clap::{
     arg,
     builder::{Command, NonEmptyStringValueParser, TypedValueParser},
     error::{ContextKind, ContextValue, Error, ErrorKind, RichFormatter},
-    Arg, ArgAction, ArgMatches, ColorChoice, FromArgMatches, Parser, Subcommand, ValueHint,
+    Arg, ArgAction, ArgMatches, ColorChoice, FromArgMatches, Parser, Subcommand, ValueEnum,
+    ValueHint,
 };
 
 #[derive(Parser, Debug, PartialEq)]
@@ -150,6 +151,16 @@ pub struct Untrack {
     pub ids: Vec<u32>,
 }
 
+#[derive(ValueEnum, Debug, Clone, PartialEq)]
+pub enum SortKey {
+    Id,
+    Title,
+    Author,
+    Chapters,
+    Words,
+    Update,
+}
+
 #[derive(clap::Args, Debug, PartialEq)]
 #[clap(visible_alias = "l", visible_alias = "ls")]
 /// List all stories that are being tracked.
@@ -157,6 +168,12 @@ pub struct List {
     /// Show only the ID and title of each tracked story.
     #[clap(short, long, display_order = 1)]
     pub short: bool,
+    /// Sort stories by the given key.
+    #[clap(long, value_name = "KEY", display_order = 2, value_enum)]
+    pub sort_by: Option<SortKey>,
+    /// Reverse the order of the list.
+    #[clap(short, long, display_order = 3)]
+    pub reverse: bool,
 }
 
 #[derive(Debug, PartialEq)]
