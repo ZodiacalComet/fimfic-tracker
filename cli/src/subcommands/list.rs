@@ -1,6 +1,6 @@
 use console::style;
 
-use fimfic_tracker::{Story, StoryData};
+use fimfic_tracker::{Story, StoryData, StoryStatus};
 
 use crate::args::{List, SortKey};
 use crate::readable::ReadableDate;
@@ -30,6 +30,7 @@ pub fn list(
         short,
         sort_by,
         reverse,
+        status_filter,
     }: List,
 ) {
     let mut stories = story_data.values().collect::<Vec<&Story>>();
@@ -84,6 +85,14 @@ pub fn list(
         "{}",
         stories
             .drain(..)
+            .filter(|story| {
+                match story.status {
+                    StoryStatus::Complete => status_filter.complete(),
+                    StoryStatus::Incomplete => status_filter.incomplete(),
+                    StoryStatus::Hiatus => status_filter.hiatus(),
+                    StoryStatus::Cancelled => status_filter.cancelled(),
+                }
+            })
             .map(output_format)
             .collect::<Vec<String>>()
             .join(sep),

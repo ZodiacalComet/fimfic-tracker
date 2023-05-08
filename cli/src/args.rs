@@ -161,6 +161,111 @@ pub enum SortKey {
     Update,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct StatusFilter(u8);
+
+macro_rules! filter_mask_funcs {
+    ($($name:ident => $const:ident,)+) => {
+        $(
+            pub fn $name(&self) -> bool {
+                (self.0 & Self::$const) > 0
+            }
+        )+
+    }
+}
+
+impl StatusFilter {
+    const COMPLETE_MASK: u8 = 0b0001;
+    const INCOMPLETE_MASK: u8 = 0b0010;
+    const HIATUS_MASK: u8 = 0b0100;
+    const CANCELLED_MASK: u8 = 0b1000;
+
+    fn new(complete: bool, incomplete: bool, hiatus: bool, cancelled: bool) -> Self {
+        let mut mask = 0;
+
+        if complete {
+            mask |= Self::COMPLETE_MASK;
+        }
+
+        if incomplete {
+            mask |= Self::INCOMPLETE_MASK;
+        }
+
+        if hiatus {
+            mask |= Self::HIATUS_MASK;
+        }
+
+        if cancelled {
+            mask |= Self::CANCELLED_MASK;
+        }
+
+        Self(mask)
+    }
+
+    fn all() -> Self {
+        Self(Self::COMPLETE_MASK | Self::INCOMPLETE_MASK | Self::HIATUS_MASK | Self::CANCELLED_MASK)
+    }
+
+    filter_mask_funcs! {
+        complete => COMPLETE_MASK,
+        incomplete => INCOMPLETE_MASK,
+        hiatus => HIATUS_MASK,
+        cancelled => CANCELLED_MASK,
+    }
+}
+
+impl clap::Args for StatusFilter {
+    fn augment_args(cmd: Command) -> Command {
+        cmd.arg(
+            arg!(complete: --"show-complete" "Show stories marked as Complete")
+                .visible_alias("complete")
+                .display_order(50),
+        )
+        .arg(
+            arg!(incomplete: --"show-incomplete" "Show stories marked as Incomplete")
+                .visible_alias("incomplete")
+                .display_order(51),
+        )
+        .arg(
+            arg!(hiatus: --"show-hiatus" "Show stories marked as On Hiatus")
+                .visible_alias("hiatus")
+                .display_order(52),
+        )
+        .arg(
+            arg!(cancelled: --"show-cancelled" "Show stories marked as Cancelled")
+                .visible_alias("cancelled")
+                .display_order(53),
+        )
+    }
+
+    fn augment_args_for_update(cmd: Command) -> Command {
+        Self::augment_args(cmd)
+    }
+}
+
+impl FromArgMatches for StatusFilter {
+    fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error<RichFormatter>> {
+        let complete = matches.get_flag("complete");
+        let incomplete = matches.get_flag("incomplete");
+        let hiatus = matches.get_flag("hiatus");
+        let cancelled = matches.get_flag("cancelled");
+
+        Ok(if !complete && !incomplete && !hiatus && !cancelled {
+            Self::all()
+        } else {
+            Self::new(complete, incomplete, hiatus, cancelled)
+        })
+    }
+
+    fn update_from_arg_matches(
+        &mut self,
+        matches: &ArgMatches,
+    ) -> Result<(), Error<RichFormatter>> {
+        *self = Self::from_arg_matches(matches)?;
+        Ok(())
+    }
+}
+
 #[derive(clap::Args, Debug, PartialEq)]
 #[clap(visible_alias = "l", visible_alias = "ls")]
 /// List all stories that are being tracked.
@@ -174,6 +279,8 @@ pub struct List {
     /// Reverse the order of the list.
     #[clap(short, long, display_order = 3)]
     pub reverse: bool,
+    #[clap(flatten)]
+    pub status_filter: StatusFilter,
 }
 
 #[derive(Debug, PartialEq)]
@@ -264,5 +371,50 @@ mod test {
     fn extract_story_id_from_url() {
         assert_id!("196256" / "the-moons-apprentice", 196256);
         assert_id!([prefixes] "196256/1/the-moons-apprentice/original-oneshot-prelude-a-dream-fulfilled", 196256);
+    }
+
+    #[test]
+    fn filter_all() {
+        let filter = StatusFilter::all();
+        assert!(filter.complete());
+        assert!(filter.incomplete());
+        assert!(filter.hiatus());
+        assert!(filter.cancelled());
+    }
+
+    #[test]
+    fn filter_complete() {
+        let filter = StatusFilter::new(true, false, false, false);
+        assert!(filter.complete());
+        assert!(!filter.incomplete());
+        assert!(!filter.hiatus());
+        assert!(!filter.cancelled());
+    }
+
+    #[test]
+    fn filter_incomplete() {
+        let filter = StatusFilter::new(false, true, false, false);
+        assert!(!filter.complete());
+        assert!(filter.incomplete());
+        assert!(!filter.hiatus());
+        assert!(!filter.cancelled());
+    }
+
+    #[test]
+    fn filter_hiatus() {
+        let filter = StatusFilter::new(false, false, true, false);
+        assert!(!filter.complete());
+        assert!(!filter.incomplete());
+        assert!(filter.hiatus());
+        assert!(!filter.cancelled());
+    }
+
+    #[test]
+    fn filter_cancelled() {
+        let filter = StatusFilter::new(false, false, false, true);
+        assert!(!filter.complete());
+        assert!(!filter.incomplete());
+        assert!(!filter.hiatus());
+        assert!(filter.cancelled());
     }
 }

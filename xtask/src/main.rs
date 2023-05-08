@@ -4,6 +4,7 @@ use clap::CommandFactory;
 use clap_complete::{generate_to, Shell};
 use eyre::{bail, Result, WrapErr};
 
+#[allow(unused)]
 mod args;
 
 use args::Args;
