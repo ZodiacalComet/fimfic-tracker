@@ -23,7 +23,7 @@ fn generate_completions() -> Result<()> {
 
     if !output_dir.is_dir() {
         DirBuilder::new()
-            .create(&output_dir)
+            .create(output_dir)
             .wrap_err_with(|| format!("failed to crate directory to `{}`", output_dir.display()))?;
     }
 
