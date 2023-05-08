@@ -213,14 +213,7 @@ impl FromArgMatches for Prompt {
         &mut self,
         matches: &ArgMatches,
     ) -> Result<(), Error<RichFormatter>> {
-        *self = if matches.get_flag("yes") {
-            Prompt::AssumeYes
-        } else if matches.get_flag("no") {
-            Prompt::AssumeNo
-        } else {
-            Prompt::Ask
-        };
-
+        *self = Self::from_arg_matches(matches)?;
         Ok(())
     }
 }
