@@ -105,7 +105,7 @@ exec = ''
 # exec = "/usr/bin/sh -c 'wget -O \"$$HOME/Downloads/$TITLE.$FORMAT\" \"$DOWNLOAD_URL\"'"
 # exec = "/usr/bin/sh -c 'wget -O \"$(xdg-user-dir DOWNLOAD)/$TITLE.$FORMAT\" \"$DOWNLOAD_URL\"'"
 
-# Whether or not to suppress the output of the command defined in download_alt.
+# Whether or not to suppress the output of the command defined in `exec`.
 # Default: false
 # Can be set from environment with: FFT_QUIET
 quiet = false
