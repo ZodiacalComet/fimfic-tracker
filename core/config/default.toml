@@ -2,10 +2,15 @@
 # The values in here expand "~/" to the home directory.
 
 # Path to the story download directory. If it doesn't already exist, it will be created.
+# Default: Your downloads directory.
 # Can be set from environment with: FFT_DOWNLOAD_DIR
 download_dir = ""
 
 # Path of the tracker file. If it doesn't already exist, it will be created.
+# Default:
+#   * On Windows: "C:\Users\USER\AppData\Local\Fimfiction Tracker\data\track-data.json"
+#   * On Mac: "/Users/USER/Library/Application Support/Fimfiction-Tracker/track-data.json"
+#   * On Linux: "${XDG_DATA_HOME:-$HOME/.local/share}/fimfic-tracker/track-data.json"
 # Can be set from environment with: FFT_TRACKER_FILE
 tracker_file = ""
 
@@ -14,10 +19,12 @@ tracker_file = ""
 # + "txt"
 # + "html"
 # + "epub"
+# Default: "html"
 # Can be set from environment with: FFT_DOWNLOAD_FORMAT
 download_format = "html"
 
 # The seconds to wait between each download.
+# Default: 5
 # Can be set from environment with: FFT_DOWNLOAD_DELAY
 download_delay = 5
 
@@ -37,6 +44,7 @@ download_delay = 5
 # + 1: Ignores (3), only on chapters and words.
 # + 2: Ignores nothing, complete check.
 #
+# Default: 0
 # Can be set from environment with: FFT_SENSIBILITY_LEVEL
 sensibility_level = 0
 
@@ -98,5 +106,6 @@ exec = ''
 # exec = "/usr/bin/sh -c 'wget -O \"$(xdg-user-dir DOWNLOAD)/$TITLE.$FORMAT\" \"$DOWNLOAD_URL\"'"
 
 # Whether or not to suppress the output of the command defined in download_alt.
+# Default: false
 # Can be set from environment with: FFT_QUIET
 quiet = false
