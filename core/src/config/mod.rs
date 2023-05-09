@@ -296,11 +296,15 @@ impl From<ConfigBuilder> for Config {
         let mut config = Self::default();
 
         if let Some(path) = builder.download_dir {
-            config.download_dir = shellexpand::tilde(&path).into_owned().into();
+            if !path.is_empty() {
+                config.download_dir = shellexpand::tilde(&path).into_owned().into();
+            }
         }
 
         if let Some(path) = builder.tracker_file {
-            config.tracker_file = shellexpand::tilde(&path).into_owned().into();
+            if !path.is_empty() {
+                config.tracker_file = shellexpand::tilde(&path).into_owned().into();
+            }
         }
 
         if let Some(format) = builder.download_format {
