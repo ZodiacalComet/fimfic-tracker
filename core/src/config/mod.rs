@@ -277,33 +277,55 @@ lazy_static! {
         .expect("user download dir should be retrievable");
 }
 
-impl From<ConfigBuilder> for Config {
-    fn from(c: ConfigBuilder) -> Self {
-        Config {
-            download_dir: c
-                .download_dir
-                .map(|s| shellexpand::tilde(&s).into_owned().into())
-                .unwrap_or_else(|| DEFAULT_DOWNLOAD_DIR.clone()),
-            tracker_file: c
-                .tracker_file
-                .map(|s| shellexpand::tilde(&s).into_owned().into())
-                .unwrap_or_else(default_user_tracker_file),
-            download_format: c.download_format.unwrap_or(DownloadFormat::HTML),
-            download_delay: c.download_delay.unwrap_or(5),
-            sensibility_level: c
-                .sensibility_level
-                .unwrap_or(SensibilityLevel::OnlyChapters),
-            exec: c
-                .exec
-                .and_then(|cmd| if cmd.is_empty() { None } else { Some(cmd) }),
-            quiet: c.quiet.unwrap_or(false),
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            download_dir: DEFAULT_DOWNLOAD_DIR.clone(),
+            tracker_file: default_user_tracker_file(),
+            download_format: DownloadFormat::HTML,
+            download_delay: 5,
+            sensibility_level: SensibilityLevel::OnlyChapters,
+            exec: None,
+            quiet: false,
         }
     }
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        ConfigBuilder::new().into()
+impl From<ConfigBuilder> for Config {
+    fn from(builder: ConfigBuilder) -> Self {
+        let mut config = Self::default();
+
+        if let Some(path) = builder.download_dir {
+            config.download_dir = shellexpand::tilde(&path).into_owned().into();
+        }
+
+        if let Some(path) = builder.tracker_file {
+            config.tracker_file = shellexpand::tilde(&path).into_owned().into();
+        }
+
+        if let Some(format) = builder.download_format {
+            config.download_format = format;
+        }
+
+        if let Some(delay) = builder.download_delay {
+            config.download_delay = delay;
+        }
+
+        if let Some(level) = builder.sensibility_level {
+            config.sensibility_level = level;
+        }
+
+        if let Some(exec) = builder.exec {
+            if !exec.is_empty() {
+                let _ = config.exec.insert(exec);
+            }
+        }
+
+        if let Some(quiet) = builder.quiet {
+            config.quiet = quiet;
+        }
+
+        config
     }
 }
 
