@@ -3,11 +3,11 @@
 
 # Path to the story download directory. If it doesn't already exist, it will be created.
 # Can be set from environment with: FFT_DOWNLOAD_DIR
-download_dir = "~/Downloads"
+download_dir = ""
 
 # Path of the tracker file. If it doesn't already exist, it will be created.
 # Can be set from environment with: FFT_TRACKER_FILE
-tracker_file = "~/.local/share/fimfic-tracker/track-data.json"
+tracker_file = ""
 
 # -- Download
 # The format in which to download the stories. The valid values are:

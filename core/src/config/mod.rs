@@ -349,11 +349,11 @@ mod test {
     macro_rules! assert_config_source {
         (
             [$origin:ident: $config:expr]
-            $($field:ident = $value:expr;)+
+            $($field:ident = $value:expr;)*
         ) => {
             let config: Config = ConfigBuilder::$origin($config)?.into();
             let expect: Config = ConfigBuilder::new()
-                $(.$field($value))+
+                $(.$field($value))*
                 .into();
 
             assert_eq!(config, expect);
@@ -396,8 +396,6 @@ mod test {
     fn deserializing_sources() -> errors::Result<()> {
         assert_config_source!(
             [from_file: config_path!("default.toml")]
-            download_dir = "~/Downloads";
-            tracker_file = "~/.local/share/fimfic-tracker/track-data.json";
         );
 
         assert_config_source!(
