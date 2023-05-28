@@ -55,8 +55,19 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (list)
 _arguments "${_arguments_options[@]}" \
+'--sort-by=[Sort stories by the given key]:KEY:(id title author chapters words update)' \
 '-s[Show only the ID and title of each tracked story]' \
 '--short[Show only the ID and title of each tracked story]' \
+'-r[Reverse the order of the list]' \
+'--reverse[Reverse the order of the list]' \
+'--show-complete[Show stories marked as Complete]' \
+'--complete[Show stories marked as Complete]' \
+'--show-incomplete[Show stories marked as Incomplete]' \
+'--incomplete[Show stories marked as Incomplete]' \
+'--show-hiatus[Show stories marked as On Hiatus]' \
+'--hiatus[Show stories marked as On Hiatus]' \
+'--show-cancelled[Show stories marked as Cancelled]' \
+'--cancelled[Show stories marked as Cancelled]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0

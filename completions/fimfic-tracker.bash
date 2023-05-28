@@ -188,12 +188,16 @@ _fimfic-tracker() {
             return 0
             ;;
         fimfic__tracker__list)
-            opts="-s -h --short --help"
+            opts="-s -r -h --short --sort-by --reverse --complete --show-complete --incomplete --show-incomplete --hiatus --show-hiatus --cancelled --show-cancelled --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
+                --sort-by)
+                    COMPREPLY=($(compgen -W "id title author chapters words update" -- "${cur}"))
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=()
                     ;;

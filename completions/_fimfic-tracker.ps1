@@ -52,8 +52,19 @@ Register-ArgumentCompleter -Native -CommandName 'fimfic-tracker' -ScriptBlock {
             break
         }
         'fimfic-tracker;list' {
+            [CompletionResult]::new('--sort-by', 'sort-by', [CompletionResultType]::ParameterName, 'Sort stories by the given key')
             [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, 'Show only the ID and title of each tracked story')
             [CompletionResult]::new('--short', 'short', [CompletionResultType]::ParameterName, 'Show only the ID and title of each tracked story')
+            [CompletionResult]::new('-r', 'r', [CompletionResultType]::ParameterName, 'Reverse the order of the list')
+            [CompletionResult]::new('--reverse', 'reverse', [CompletionResultType]::ParameterName, 'Reverse the order of the list')
+            [CompletionResult]::new('--show-complete', 'show-complete', [CompletionResultType]::ParameterName, 'Show stories marked as Complete')
+            [CompletionResult]::new('--complete', 'complete', [CompletionResultType]::ParameterName, 'Show stories marked as Complete')
+            [CompletionResult]::new('--show-incomplete', 'show-incomplete', [CompletionResultType]::ParameterName, 'Show stories marked as Incomplete')
+            [CompletionResult]::new('--incomplete', 'incomplete', [CompletionResultType]::ParameterName, 'Show stories marked as Incomplete')
+            [CompletionResult]::new('--show-hiatus', 'show-hiatus', [CompletionResultType]::ParameterName, 'Show stories marked as On Hiatus')
+            [CompletionResult]::new('--hiatus', 'hiatus', [CompletionResultType]::ParameterName, 'Show stories marked as On Hiatus')
+            [CompletionResult]::new('--show-cancelled', 'show-cancelled', [CompletionResultType]::ParameterName, 'Show stories marked as Cancelled')
+            [CompletionResult]::new('--cancelled', 'cancelled', [CompletionResultType]::ParameterName, 'Show stories marked as Cancelled')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

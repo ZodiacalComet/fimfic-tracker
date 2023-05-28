@@ -12,7 +12,13 @@ complete -c fimfic-tracker -n "__fish_seen_subcommand_from track" -s o -l overwr
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from track" -s s -l skip-download -d 'Don\'t download stories, only updates cached data'
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from track" -s h -l help -d 'Print help'
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from untrack" -s h -l help -d 'Print help'
+complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -l sort-by -d 'Sort stories by the given key' -r -f -a "{id	,title	,author	,chapters	,words	,update	}"
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -s s -l short -d 'Show only the ID and title of each tracked story'
+complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -s r -l reverse -d 'Reverse the order of the list'
+complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -l show-complete -l complete -d 'Show stories marked as Complete'
+complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -l show-incomplete -l incomplete -d 'Show stories marked as Incomplete'
+complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -l show-hiatus -l hiatus -d 'Show stories marked as On Hiatus'
+complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -l show-cancelled -l cancelled -d 'Show stories marked as Cancelled'
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from list" -s h -l help -d 'Print help'
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from download" -s f -l force -d 'Download no matter the presence of updates'
 complete -c fimfic-tracker -n "__fish_seen_subcommand_from download" -s y -l yes -d 'Automatically answers prompts with Y'

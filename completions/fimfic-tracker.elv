@@ -46,8 +46,19 @@ set edit:completion:arg-completer[fimfic-tracker] = {|@words|
             cand --help 'Print help'
         }
         &'fimfic-tracker;list'= {
+            cand --sort-by 'Sort stories by the given key'
             cand -s 'Show only the ID and title of each tracked story'
             cand --short 'Show only the ID and title of each tracked story'
+            cand -r 'Reverse the order of the list'
+            cand --reverse 'Reverse the order of the list'
+            cand --show-complete 'Show stories marked as Complete'
+            cand --complete 'Show stories marked as Complete'
+            cand --show-incomplete 'Show stories marked as Incomplete'
+            cand --incomplete 'Show stories marked as Incomplete'
+            cand --show-hiatus 'Show stories marked as On Hiatus'
+            cand --hiatus 'Show stories marked as On Hiatus'
+            cand --show-cancelled 'Show stories marked as Cancelled'
+            cand --cancelled 'Show stories marked as Cancelled'
             cand -h 'Print help'
             cand --help 'Print help'
         }
